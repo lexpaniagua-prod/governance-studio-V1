@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run:*)",
+      "mcp__Claude_Preview__preview_start",
+      "Read(//c/Users/alexa/OneDrive/Desktop/Proto Screenshots/Governance/governance-studio-prototype/**)",
+      "Bash(powershell -Command \"Compress-Archive -Path 'governance-studio' -DestinationPath 'governance-studio.zip' -Force\")",
+      "Bash(powershell -Command \"\\(Get-Item 'C:\\\\Users\\\\alexa\\\\OneDrive\\\\Desktop\\\\Proto Screenshots\\\\Governance\\\\governance-studio-prototype\\\\governance-studio.zip'\\).Length / 1MB\")",
+      "Bash(powershell -Command ':*)",
+      "Bash(powershell -Command \"\\(Get-Item 'C:\\\\Users\\\\alexa\\\\OneDrive\\\\Desktop\\\\Proto Screenshots\\\\Governance\\\\governance-studio-prototype\\\\governance-studio-light.zip'\\).Length / 1MB\")",
+      "Bash(cp src/main.jsx src/main.jsx.bak)",
+      "Bash(cp vite.config.js vite.config.js.bak)",
+      "Bash(netstat -ano)",
+      "Bash(taskkill /PID 7252 /F)",
+      "Bash(cmd /c \"taskkill /PID 7252 /F\")",
+      "Bash(cmd /c \"netstat -ano | findstr 5173\")",
+      "Bash(cmd /c \"netstat -ano | findstr :5173\")",
+      "Bash(node -e \"const l = require\\('lucide-react'\\); console.log\\(Object.keys\\(l\\).filter\\(k => k.toLowerCase\\(\\).includes\\('send'\\)\\)\\)\")",
+      "Bash(node -e \"const l = require\\('lucide-react'\\); ['Award','Layers','Package','PenLine','XCircle','FileText','SendHorizonal'].forEach\\(k => console.log\\(k, !!l[k]\\)\\)\")",
+      "Bash(node -e ' *)"
+    ]
+  }
+}
