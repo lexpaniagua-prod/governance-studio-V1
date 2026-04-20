@@ -62,7 +62,7 @@ function ReviewerPicker({ selected, onToggle, max }) {
       <div className="flex items-center justify-between">
         <p className="text-[11px] text-text-muted">Assign specific reviewers <span className="opacity-60">(optional)</span></p>
         {selected.length > 0 && (
-          <span className="text-[10px]" style={{ color: '#a78bfa' }}>{selected.length}/{max} selected</span>
+          <span className="text-[10px]" style={{ color: '#a78bfa' }}>{selected.length} selected</span>
         )}
       </div>
 
@@ -210,7 +210,6 @@ export default function CreateFactModal({ onClose, onSubmit }) {
   const toggleReviewer = p => setReviewers(prev => {
     const exists = prev.find(r => r.email === p.email)
     if (exists) return prev.filter(r => r.email !== p.email)
-    if (prev.length >= peerCount) return prev
     return [...prev, p]
   })
 
@@ -254,7 +253,7 @@ export default function CreateFactModal({ onClose, onSubmit }) {
         {/* ── Body ── */}
         <div className="flex-1 overflow-y-auto">
           {submitted ? (
-            <SuccessView approvalMode={approvalMode} peerCount={peerCount} onClose={onClose} />
+            <SuccessView approvalMode={approvalMode} peerCount={reviewers.length || 1} onClose={onClose} />
           ) : (
             <div className="grid grid-cols-2 divide-x" style={{ divideColor: 'rgba(255,255,255,0.06)' }}>
 
@@ -517,7 +516,7 @@ export default function CreateFactModal({ onClose, onSubmit }) {
                     </div>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] text-text-muted">Domain / Tag</label>
+                    <label className="text-[10px] text-text-muted">Department Kb</label>
                     <select className="input-base text-xs" value={tag} onChange={e => setTag(e.target.value)}>
                       {TAGS.map(t => <option key={t}>{t}</option>)}
                     </select>
@@ -605,38 +604,21 @@ export default function CreateFactModal({ onClose, onSubmit }) {
                     <div className="space-y-3 rounded-xl p-3.5"
                       style={{ background: 'rgba(124,92,252,0.05)', border: '1px solid rgba(124,92,252,0.18)' }}>
 
-                      {/* Peer count */}
-                      <div className="space-y-2">
-                        <p className="text-[11px] text-text-muted font-medium">Required approvals</p>
-                        <div className="flex gap-2">
-                          {[1, 2, 3].map(n => (
-                            <button key={n}
-                              className="flex-1 py-2 rounded-lg text-xs font-semibold transition-all"
-                              style={peerCount === n ? {
-                                background: 'rgba(167,139,250,0.18)', color: '#a78bfa', border: '1px solid rgba(167,139,250,0.4)',
-                              } : {
-                                background: 'rgba(255,255,255,0.03)', color: 'var(--text-muted)', border: '1px solid rgba(255,255,255,0.08)',
-                              }}
-                              onClick={() => {
-                                setPeerCount(n)
-                                setReviewers(prev => prev.slice(0, n))
-                              }}>
-                              {n} {n === 1 ? 'approver' : 'approvers'}
-                            </button>
-                          ))}
-                        </div>
+                      {/* Reviewer picker — unlimited selection */}
+                      <div className="space-y-1">
+                        <p className="text-[11px] text-text-muted font-medium">
+                          Select one or more approvers — all must sign off before the fact becomes Verified.
+                        </p>
                       </div>
-
-                      {/* Reviewer picker */}
                       <ReviewerPicker
                         selected={reviewers}
                         onToggle={toggleReviewer}
-                        max={peerCount}
+                        max={PEOPLE.length}
                       />
 
                       {/* Attestation path preview */}
                       <div className="flex items-center gap-1 pt-1">
-                        {['Create', ...Array.from({ length: peerCount }, (_, i) => `Approve ${peerCount > 1 ? i + 1 : ''}`), 'Verified'].map((step, i, arr) => (
+                        {['Create', ...reviewers.map((_, i) => `Approve ${reviewers.length > 1 ? i + 1 : ''}`), 'Verified'].map((step, i, arr) => (
                           <React.Fragment key={step + i}>
                             <div className="flex flex-col items-center gap-0.5">
                               <div className="w-5 h-5 rounded-full flex items-center justify-center"
@@ -672,7 +654,9 @@ export default function CreateFactModal({ onClose, onSubmit }) {
             <p className="text-[11px] text-text-muted">
               {approvalMode === 'self'
                 ? 'Fact will be immediately Verified upon creation.'
-                : `Fact will enter the review queue and require ${peerCount} approval${peerCount > 1 ? 's' : ''}.`}
+                : reviewers.length > 0
+                  ? `Fact will require sign-off from ${reviewers.length} reviewer${reviewers.length > 1 ? 's' : ''}.`
+                  : 'Fact will enter the review queue pending peer approval.'}
             </p>
             <div className="flex items-center gap-2.5">
               <button className="btn-secondary text-xs py-1.5 px-4" onClick={onClose}>Cancel</button>

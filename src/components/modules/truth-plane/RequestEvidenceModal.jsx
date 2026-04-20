@@ -20,6 +20,7 @@ const REQUESTED_ITEMS = [
   { id: 'attestation',     label: 'Approval / attestation proof' },
   { id: 'validity-dates',  label: 'Updated validity dates'    },
   { id: 'scope',           label: 'Clarification of scope'    },
+  { id: 'other',           label: 'Other'                     },
 ]
 
 const ALL_USERS = [
@@ -82,10 +83,11 @@ function Avatar({ item }) {
 // ── Main modal ────────────────────────────────────────────────────────────────
 
 export default function RequestEvidenceModal({ item, onClose, onSubmit }) {
-  const [reason,         setReason]         = useState('')
-  const [otherReason,    setOtherReason]    = useState('')
-  const [requestedItems, setRequestedItems] = useState([])
-  const [assignedTo,     setAssignedTo]     = useState(null)
+  const [reason,              setReason]              = useState('')
+  const [otherReason,         setOtherReason]         = useState('')
+  const [requestedItems,      setRequestedItems]      = useState([])
+  const [otherRequestedItem,  setOtherRequestedItem]  = useState('')
+  const [assignedTo,          setAssignedTo]          = useState(null)
   const [userSearch,     setUserSearch]     = useState('')
   const [message,        setMessage]        = useState('')
   const [dueDate,        setDueDate]        = useState('')
@@ -121,6 +123,7 @@ export default function RequestEvidenceModal({ item, onClose, onSubmit }) {
     if (!reason)                 e.reason        = 'Select a reason.'
     if (reason === 'other' && !otherReason.trim()) e.otherReason = 'Describe the reason.'
     if (requestedItems.length === 0) e.requestedItems = 'Select at least one item.'
+    if (requestedItems.includes('other') && !otherRequestedItem.trim()) e.otherRequestedItem = 'Describe what you need.'
     if (!assignedTo)             e.assignedTo    = 'Assign to someone.'
     return e
   }
@@ -136,7 +139,7 @@ export default function RequestEvidenceModal({ item, onClose, onSubmit }) {
       factTitle:      item.factTitle,
       reason:         reason === 'other' ? otherReason.trim() : REASONS.find(r => r.id === reason)?.label,
       reasonId:       reason,
-      requestedItems: requestedItems.map(id => REQUESTED_ITEMS.find(r => r.id === id)?.label).filter(Boolean),
+      requestedItems: requestedItems.map(id => id === 'other' ? otherRequestedItem.trim() : REQUESTED_ITEMS.find(r => r.id === id)?.label).filter(Boolean),
       assignedTo:     assignedTo.name,
       assignedToId:   assignedTo.id,
       message:        message.trim() || null,
@@ -237,10 +240,21 @@ export default function RequestEvidenceModal({ item, onClose, onSubmit }) {
                 {REQUESTED_ITEMS.map(r => (
                   <Pill key={r.id} label={r.label} multi
                     selected={requestedItems.includes(r.id)}
-                    onClick={() => { toggleItem(r.id); setErrors(e => ({ ...e, requestedItems: '' })) }} />
+                    onClick={() => { toggleItem(r.id); setErrors(e => ({ ...e, requestedItems: '', otherRequestedItem: '' })) }} />
                 ))}
               </div>
               {errors.requestedItems && <p className="text-[10px] text-red-400 mt-1">{errors.requestedItems}</p>}
+              {requestedItems.includes('other') && (
+                <div className="mt-2">
+                  <textarea
+                    className="input-base w-full text-xs resize-none leading-relaxed"
+                    rows={2}
+                    placeholder="Describe what you need…"
+                    value={otherRequestedItem}
+                    onChange={e => { setOtherRequestedItem(e.target.value); setErrors(er => ({ ...er, otherRequestedItem: '' })) }} />
+                  {errors.otherRequestedItem && <p className="text-[10px] text-red-400 mt-1">{errors.otherRequestedItem}</p>}
+                </div>
+              )}
             </div>
 
             {/* 4 ── Assign to */}

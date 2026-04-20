@@ -1232,7 +1232,7 @@ function EditReviewerPicker({ selected, onToggle, max }) {
       <div className="flex items-center justify-between">
         <p className="text-[11px] text-text-muted">Assign specific reviewers <span className="opacity-60">(optional)</span></p>
         {selected.length > 0 && (
-          <span className="text-[10px]" style={{ color: '#a78bfa' }}>{selected.length}/{max} selected</span>
+          <span className="text-[10px]" style={{ color: '#a78bfa' }}>{selected.length} selected</span>
         )}
       </div>
       {selected.length > 0 && (
@@ -1312,7 +1312,6 @@ function EditProposalModal({ proposal, onClose, onSave }) {
   const toggleReviewer = p => setReviewers(prev => {
     const exists = prev.find(r => r.email === p.email)
     if (exists) return prev.filter(r => r.email !== p.email)
-    if (prev.length >= peerCount) return prev
     return [...prev, p]
   })
 
@@ -1627,7 +1626,7 @@ function EditProposalModal({ proposal, onClose, onSave }) {
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-1">
-                    <label className="text-[10px] text-text-muted">Domain / Tag</label>
+                    <label className="text-[10px] text-text-muted">Department Kb</label>
                     <select className="input-base text-xs" value={tag} onChange={e => setTag(e.target.value)}>
                       {EDIT_TAGS.map(t => <option key={t}>{t}</option>)}
                     </select>
@@ -1718,25 +1717,16 @@ function EditProposalModal({ proposal, onClose, onSave }) {
                 {approvalMode === 'peer' && (
                   <div className="space-y-3 rounded-xl p-3"
                     style={{ background: 'rgba(124,92,252,0.05)', border: '1px solid rgba(124,92,252,0.18)' }}>
-                    <div className="space-y-2">
-                      <p className="text-[11px] text-text-muted font-medium">Required approvals</p>
-                      <div className="flex gap-1.5">
-                        {[1, 2, 3].map(n => (
-                          <button key={n}
-                            className="flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all"
-                            style={peerCount === n
-                              ? { background: 'rgba(167,139,250,0.18)', color: '#a78bfa', border: '1px solid rgba(167,139,250,0.4)' }
-                              : { background: 'rgba(255,255,255,0.03)', color: 'var(--text-muted)', border: '1px solid rgba(255,255,255,0.08)' }}
-                            onClick={() => { setPeerCount(n); setReviewers(prev => prev.slice(0, n)) }}>
-                            {n} {n === 1 ? 'approver' : 'approvers'}
-                          </button>
-                        ))}
-                      </div>
+                    {/* Reviewer picker — unlimited selection */}
+                    <div className="space-y-1">
+                      <p className="text-[11px] text-text-muted font-medium">
+                        Select one or more approvers — all must sign off before the fact becomes Verified.
+                      </p>
                     </div>
-                    <EditReviewerPicker selected={reviewers} onToggle={toggleReviewer} max={peerCount} />
+                    <EditReviewerPicker selected={reviewers} onToggle={toggleReviewer} max={EDIT_PEOPLE.length} />
                     {/* Attestation path */}
                     <div className="flex items-center gap-1 pt-1">
-                      {['Create', ...Array.from({ length: peerCount }, (_, i) => `Approve${peerCount > 1 ? ` ${i + 1}` : ''}`), 'Verified'].map((step, i, arr) => (
+                      {['Create', ...reviewers.map((_, i) => `Approve${reviewers.length > 1 ? ` ${i + 1}` : ''}`), 'Verified'].map((step, i, arr) => (
                         <React.Fragment key={step + i}>
                           <div className="flex flex-col items-center gap-0.5">
                             <div className="w-5 h-5 rounded-full flex items-center justify-center"
@@ -2752,7 +2742,7 @@ export default function TruthPlaneDetail() {
 
                         {/* Quick action strip */}
                         {isActionable && (
-                          <div className="flex gap-1.5 mt-2.5 flex-wrap" onClick={e => e.stopPropagation()}>
+                          <div className="flex gap-1.5 mt-2.5 flex-wrap justify-end" onClick={e => e.stopPropagation()}>
                             <button className="text-[10px] px-2.5 py-1 rounded-lg font-medium flex items-center gap-1 transition-colors hover:brightness-110"
                               style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.25)', color: '#4ade80' }}
                               onClick={() => handleReviewApprove(item)}>
