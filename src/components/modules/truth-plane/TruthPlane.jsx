@@ -403,9 +403,9 @@ function TruthPlaneSlideOut({ plane, onClose, onOpen, onNavigate }) {
             </div>
           </div>
 
-          {/* Attestation & Governance Trail */}
+          {/* Governance Thread */}
           <div>
-            <p className="section-label mb-2">Attestation & Governance Trail</p>
+            <p className="section-label mb-2">Governance Thread</p>
             <div className="space-y-1.5">
               {trailRows.map(({ role, person, date, Icon, color }) => {
                 const done = person || date

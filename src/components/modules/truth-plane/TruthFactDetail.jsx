@@ -128,7 +128,7 @@ export default function TruthFactDetail() {
 
       {/* Tabs */}
       <div className="tab-bar mb-6">
-        {['Overview', `Evidence (${evidence.length})`, 'Attestation'].map(t => (
+        {['Overview', `Evidence (${evidence.length})`, 'Governance Thread'].map(t => (
           <button key={t} className={clsx('tab-btn', tab === t && 'active')} onClick={() => setTab(t)}>{t}</button>
         ))}
       </div>
@@ -228,40 +228,10 @@ export default function TruthFactDetail() {
         </div>
       )}
 
-      {/* ── ATTESTATION ── */}
-      {tab === 'Attestation' && (
+      {/* ── GOVERNANCE THREAD ── */}
+      {tab === 'Governance Thread' && (
         <div className="space-y-6">
-          <div>
-            <p className="section-label mb-4">Governance Trail</p>
-            <GovernanceTimeline gov={gov} />
-          </div>
-
-          <div className="glass-card p-4">
-            <p className="section-label mb-3">Attestation Summary</p>
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                { label: 'Created by',           key: 'createdBy'  },
-                { label: 'Created on',           key: 'createdBy',  field: 1 },
-                { label: 'Promoted to Truth by', key: 'promotedBy' },
-                { label: 'Promotion date',       key: 'promotedBy', field: 1 },
-                { label: 'Conflict resolved by', key: 'resolvedBy' },
-                { label: 'Resolution date',      key: 'resolvedBy', field: 1 },
-                { label: 'Approved by',          key: 'approvedBy' },
-                { label: 'Approval date',        key: 'approvedBy', field: 1 },
-              ].map(({ label, key, field = 0 }) => {
-                const entry = gov[key]
-                const value = entry?.[2] ? entry[field] : null
-                return (
-                  <div key={label} className="rounded-lg p-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                    <p className="text-[10px] text-text-muted mb-1">{label}</p>
-                    <p className="text-xs font-medium text-text-secondary">
-                      {value || <span className="italic opacity-50">—</span>}
-                    </p>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
+          <GovernanceTimeline gov={gov} />
         </div>
       )}
 

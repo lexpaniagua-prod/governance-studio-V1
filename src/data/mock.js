@@ -336,6 +336,10 @@ export const factProposals = [
       { name: 'Emma Rodriguez', role: 'Truth Approver', status: 'approved' },
       { name: 'Legal Review',   role: 'Legal Sign-off', status: 'pending'  },
     ],
+    changes: [
+      { field: 'title',    label: 'Title',          current: 'Service Level Agreement - Uptime Guarantee', proposed: 'Service Level Agreement - Uptime Guarantee (Enhanced)' },
+      { field: 'factText', label: 'Fact Statement',  current: 'The cloud infrastructure services shall maintain an uptime of 99.9% as measured on a monthly basis, excluding scheduled maintenance windows.', proposed: 'The cloud infrastructure services shall maintain an uptime of 99.95% as measured on a monthly basis, excluding scheduled maintenance windows and planned upgrade events.' },
+    ],
   },
   {
     id: 'PROP-002',
@@ -355,6 +359,9 @@ export const factProposals = [
     approvers: [
       { name: 'David Kim',    role: 'Truth Approver', status: 'pending' },
       { name: 'Legal Review', role: 'Legal Sign-off',  status: 'pending' },
+    ],
+    changes: [
+      { field: 'factText', label: 'Fact Statement', current: 'This Agreement shall automatically renew for successive one-year terms unless either party provides written notice of non-renewal at least sixty (60) days prior to the current term expiration date.', proposed: 'This Agreement shall automatically renew for successive one-year terms unless either party provides written notice of non-renewal at least ninety (90) days prior to the current term expiration date.' },
     ],
   },
   {
@@ -376,6 +383,10 @@ export const factProposals = [
       { name: 'James Rodriguez', role: 'Truth Approver',   status: 'pending' },
       { name: 'Finance Lead',    role: 'Finance Sign-off', status: 'pending' },
     ],
+    changes: [
+      { field: 'factText', label: 'Fact Statement', current: 'All invoices shall be paid within thirty (30) days of the invoice date. Late payments shall incur a penalty of 1.5% per month or the maximum allowed by law.', proposed: 'All invoices shall be paid within forty-five (45) days of the invoice date. Late payments shall incur a penalty of 1.5% per month or the maximum allowed by law, with a 5-day grace period before the penalty is applied.' },
+      { field: 'risk',     label: 'Risk Level',     current: 'Medium', proposed: 'Low' },
+    ],
   },
   {
     id: 'PROP-006',
@@ -391,6 +402,10 @@ export const factProposals = [
     comments: [],
     approvers: [
       { name: 'David Kim', role: 'Truth Approver', status: 'pending' },
+    ],
+    changes: [
+      { field: 'factText',    label: 'Fact Statement',   current: 'Vendor shall provide 24/7 technical support services with a guaranteed response time of two (2) hours or less for all priority issues.', proposed: 'Vendor shall provide 24/7 technical support services with a guaranteed initial response time of one (1) hour for critical issues and four (4) hours for standard priority issues.' },
+      { field: 'confidence',  label: 'Confidence Score', current: '88%', proposed: '84%' },
     ],
   },
   // ── Additional proposals for TF-0001 (multi-proposal group) ─────────────────
@@ -410,6 +425,11 @@ export const factProposals = [
     comments: [],
     approvers: [
       { name: 'James Rodriguez', role: 'Truth Approver', status: 'pending' },
+    ],
+    changes: [
+      { field: 'title',    label: 'Title',          current: 'Service Level Agreement - Uptime Guarantee', proposed: 'Service Level Agreement - Uptime Guarantee (Four-Nines)' },
+      { field: 'factText', label: 'Fact Statement',  current: 'The cloud infrastructure services shall maintain an uptime of 99.9% as measured on a monthly basis, excluding scheduled maintenance windows.', proposed: 'The cloud infrastructure services shall maintain an uptime of 99.99% ("four nines") as measured on a monthly basis, excluding scheduled maintenance windows and approved change requests logged at least 48 hours in advance.' },
+      { field: 'validTo',  label: 'Validity Period', current: 'Dec 31, 2024', proposed: 'May 1, 2024 – May 1, 2026' },
     ],
   },
   {
@@ -438,6 +458,10 @@ export const factProposals = [
       { name: 'David Kim',    role: 'Truth Approver', status: 'pending' },
       { name: 'Legal Review', role: 'Legal Sign-off',  status: 'pending' },
     ],
+    changes: [
+      { field: 'factText', label: 'Fact Statement',   current: 'The cloud infrastructure services shall maintain an uptime of 99.9% as measured on a monthly basis, excluding scheduled maintenance windows.', proposed: 'The cloud infrastructure services shall maintain an uptime of 99.95% as measured on a monthly basis, excluding scheduled maintenance windows. Downtime exceeding the threshold shall trigger prorated service credits at 5% of monthly fees per 0.1% of SLA breach.' },
+      { field: 'source',   label: 'Evidence Source',  current: 'None', proposed: 'Enterprise SLA Addendum v2 · BDL-022 (confidence 94%)' },
+    ],
   },
   // ── Additional proposal for TF-0004 (multi-proposal group) ──────────────────
   {
@@ -464,6 +488,10 @@ export const factProposals = [
     approvers: [
       { name: 'Finance Lead',    role: 'Finance Sign-off', status: 'pending' },
       { name: 'Legal Review',    role: 'Legal Sign-off',   status: 'pending' },
+    ],
+    changes: [
+      { field: 'factText', label: 'Fact Statement', current: 'All invoices shall be paid within thirty (30) days of the invoice date. Late payments shall incur a penalty of 1.5% per month or the maximum allowed by law.', proposed: 'All invoices shall be paid within thirty (30) days of invoice date for standard accounts, or sixty (60) days for enterprise accounts with ACV exceeding $100,000 and approved credit status. Late payments shall incur a penalty of 1.5% per month or the maximum allowed by law.' },
+      { field: 'risk',     label: 'Risk Level',     current: 'Low', proposed: 'Medium' },
     ],
   },
   {
@@ -539,6 +567,10 @@ export const reviewQueue = [
     required_approvals: 1,
     current_approvals: 0,
     comments: [],
+    changes: [
+      { field: 'validTo',     label: 'Validity Period',   current: 'Expires Jan 12, 2025', proposed: 'Renewed through Jan 12, 2026' },
+      { field: 'confidence',  label: 'Confidence Score',  current: '95%', proposed: '97% (re-attested)' },
+    ],
   },
   {
     id: 'RV-0002',
@@ -559,6 +591,10 @@ export const reviewQueue = [
     required_approvals: 2,
     current_approvals: 0,
     comments: [],
+    changes: [
+      { field: 'factText',   label: 'Fact Statement',   current: 'This Agreement shall automatically renew for successive one-year terms unless either party provides written notice of non-renewal at least sixty (60) days prior to the current term expiration date.', proposed: 'This Agreement shall automatically renew for successive one-year terms unless either party provides written notice of non-renewal at least ninety (90) days prior to the current term expiration date. (aligned to new source evidence)' },
+      { field: 'confidence', label: 'Confidence Score', current: '92%', proposed: '89% (adjusted for conflicting signal)' },
+    ],
   },
   {
     id: 'RV-0003',
@@ -588,6 +624,10 @@ export const reviewQueue = [
         date: '2024-03-10',
       },
     ],
+    changes: [
+      { field: 'risk',       label: 'Risk Level',       current: 'High',   proposed: 'Medium' },
+      { field: 'confidence', label: 'Confidence Score', current: '88%',    proposed: '82% (reconciled)' },
+    ],
   },
   {
     id: 'RV-0004',
@@ -608,6 +648,9 @@ export const reviewQueue = [
     required_approvals: 1,
     current_approvals: 0,
     comments: [],
+    changes: [
+      { field: 'factText', label: 'Fact Statement', current: 'Vendor shall provide 24/7 technical support services with a guaranteed response time of two (2) hours or less for all priority issues.', proposed: 'Vendor shall provide 24/7 technical support services with a guaranteed initial response time of one (1) hour for critical issues and four (4) hours for standard priority issues.' },
+    ],
   },
   {
     id: 'RV-0005',

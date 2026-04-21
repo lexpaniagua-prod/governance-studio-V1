@@ -309,7 +309,7 @@ export default function CreateFactModal({ onClose, onSubmit }) {
 
                   {/* Source type toggle */}
                   <div className="flex gap-1 p-1 rounded-lg" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
-                    {['Document', 'Bundle', 'Human', 'None'].map(opt => (
+                    {['Document', 'Human'].map(opt => (
                       <button key={opt}
                         className="flex-1 py-1.5 rounded-md text-xs font-medium transition-all"
                         style={sourceType === opt ? {
@@ -516,7 +516,7 @@ export default function CreateFactModal({ onClose, onSubmit }) {
                     </div>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] text-text-muted">Department Kb</label>
+                    <label className="text-[10px] text-text-muted">Knowledge Base</label>
                     <select className="input-base text-xs" value={tag} onChange={e => setTag(e.target.value)}>
                       {TAGS.map(t => <option key={t}>{t}</option>)}
                     </select>
@@ -542,7 +542,7 @@ export default function CreateFactModal({ onClose, onSubmit }) {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-0.5">
-                          <p className="text-xs font-semibold text-text-primary">Self-approve</p>
+                          <p className="text-xs font-semibold text-text-primary">Automatic</p>
                           {approvalMode === 'self' && (
                             <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
                               style={{ background: 'rgba(45,212,191,0.15)', color: '#2dd4bf', border: '1px solid rgba(45,212,191,0.3)' }}>
@@ -577,7 +577,7 @@ export default function CreateFactModal({ onClose, onSubmit }) {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-0.5">
-                          <p className="text-xs font-semibold text-text-primary">Peer approval</p>
+                          <p className="text-xs font-semibold text-text-primary">Manual</p>
                           {approvalMode === 'peer' && (
                             <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
                               style={{ background: 'rgba(167,139,250,0.15)', color: '#a78bfa', border: '1px solid rgba(167,139,250,0.3)' }}>
@@ -599,27 +599,17 @@ export default function CreateFactModal({ onClose, onSubmit }) {
                     </button>
                   </div>
 
-                  {/* Peer options */}
+                  {/* Manual options */}
                   {approvalMode === 'peer' && (
-                    <div className="space-y-3 rounded-xl p-3.5"
+                    <div className="rounded-xl p-3.5"
                       style={{ background: 'rgba(124,92,252,0.05)', border: '1px solid rgba(124,92,252,0.18)' }}>
-
-                      {/* Reviewer picker — unlimited selection */}
-                      <div className="space-y-1">
-                        <p className="text-[11px] text-text-muted font-medium">
-                          Select one or more approvers — all must sign off before the fact becomes Verified.
-                        </p>
-                      </div>
-                      <ReviewerPicker
-                        selected={reviewers}
-                        onToggle={toggleReviewer}
-                        max={PEOPLE.length}
-                      />
-
+                      <p className="text-[11px] text-text-muted leading-relaxed">
+                        Fact will enter the review queue and require sign-off from a peer reviewer before becoming Verified.
+                      </p>
                       {/* Attestation path preview */}
-                      <div className="flex items-center gap-1 pt-1">
-                        {['Create', ...reviewers.map((_, i) => `Approve ${reviewers.length > 1 ? i + 1 : ''}`), 'Verified'].map((step, i, arr) => (
-                          <React.Fragment key={step + i}>
+                      <div className="flex items-center gap-1 pt-3">
+                        {['Create', 'Approve', 'Verified'].map((step, i, arr) => (
+                          <React.Fragment key={step}>
                             <div className="flex flex-col items-center gap-0.5">
                               <div className="w-5 h-5 rounded-full flex items-center justify-center"
                                 style={{
@@ -630,7 +620,7 @@ export default function CreateFactModal({ onClose, onSubmit }) {
                                   ? <CheckCircle size={9} style={{ color: '#4ade80' }} />
                                   : <span className="text-[8px] font-bold" style={{ color: '#a78bfa' }}>{i + 1}</span>}
                               </div>
-                              <p className="text-[8px] text-text-muted text-center leading-tight max-w-[44px]">{step.trim()}</p>
+                              <p className="text-[8px] text-text-muted text-center leading-tight max-w-[44px]">{step}</p>
                             </div>
                             {i < arr.length - 1 && (
                               <ChevronRight size={9} className="text-text-muted opacity-25 shrink-0 mb-3" />

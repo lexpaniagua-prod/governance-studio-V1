@@ -7,6 +7,7 @@ import { truthPlanes, truthFacts, factGovernance, factProposals, breakGlassRecor
 import { Badge, Chip, ThreeDot, SearchBar, SlideOut, TabBar, AllFiltersPanel, FilterSection, MetricCard } from '../../ui/index'
 import { GovernanceCompact, GovernanceSnapshot, GovernanceTimeline } from './GovernanceTrail'
 import ProposeChangeModal from './ProposeChangeModal'
+import ApproveConfirmModal, { WhatChangesView } from './ApproveConfirmModal'
 import CreateFactModal from './CreateFactModal'
 import BreakGlassModal from './BreakGlassModal'
 import RequestEvidenceModal from './RequestEvidenceModal'
@@ -527,7 +528,7 @@ function ReviewSlideOut({ item, onClose, onApprove, onPropose, onRequestEvidence
 
       {/* Tabs */}
       <div className="tab-bar mb-4">
-        {['Overview', commentTab].map(t => (
+        {['Overview', 'What Changes', commentTab].map(t => (
           <button key={t} className={clsx('tab-btn', tab === t && 'active')} onClick={() => setTab(t)}>{t}</button>
         ))}
       </div>
@@ -579,9 +580,8 @@ function ReviewSlideOut({ item, onClose, onApprove, onPropose, onRequestEvidence
             </div>
           </div>
 
-          {/* Attestation snapshot */}
+          {/* Governance Thread snapshot */}
           <div>
-            <p className="section-label mb-2">Attestation Status</p>
             <GovernanceSnapshot gov={gov} />
           </div>
 
@@ -622,6 +622,10 @@ function ReviewSlideOut({ item, onClose, onApprove, onPropose, onRequestEvidence
             </div>
           </div>
         </div>
+      )}
+
+      {tab === 'What Changes' && (
+        <WhatChangesView changes={item.changes} />
       )}
 
       {tab === commentTab && (
@@ -804,7 +808,8 @@ function ProposalSlideOut({ proposal, onClose, onApprove, onReject, onSupersede,
           ...(claimsTab ? [claimsTab] : []),
           `Evidence (${(proposal.evidence||[]).length})`,
           commentTab,
-          'Attestation',
+          'What Changes',
+          'Governance Thread',
         ].map(t => (
           <button key={t} className={clsx('tab-btn', tab === t && 'active')} onClick={() => setTab(t)}>{t}</button>
         ))}
@@ -1148,40 +1153,54 @@ function ProposalSlideOut({ proposal, onClose, onApprove, onReject, onSupersede,
         </div>
       )}
 
-      {/* ── ATTESTATION ── */}
-      {tab === 'Attestation' && (
+      {/* ── WHAT CHANGES ── */}
+      {tab === 'What Changes' && (
+        <WhatChangesView changes={proposal.changes} isNewFact={isNewFact} />
+      )}
+
+      {/* ── GOVERNANCE THREAD ── */}
+      {tab === 'Governance Thread' && (
         <div className="space-y-4 pb-4">
-          <div>
-            <p className="section-label mb-3">Approval Expectations</p>
-            <div className="space-y-2">
-              {(proposal.approvers || []).map((ap, i) => {
-                const as = APPROVER_STATUS[ap.status] || APPROVER_STATUS['pending']
-                const AIcon = as.icon
-                return (
-                  <div key={i} className="flex items-center gap-3 p-3 rounded-xl"
-                    style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
-                      style={{ background: as.bg }}>
-                      {AIcon ? <AIcon size={14} style={{ color: as.color }} /> : <span className="text-[11px] font-bold" style={{ color: as.color }}>{ap.name[0]}</span>}
+          {/* Approval expectations */}
+          {(proposal.approvers || []).length > 0 && (
+            <div>
+              <p className="section-label mb-3">Approval Expectations</p>
+              <div className="space-y-2">
+                {(proposal.approvers || []).map((ap, i) => {
+                  const as = APPROVER_STATUS[ap.status] || APPROVER_STATUS['pending']
+                  const AIcon = as.icon
+                  return (
+                    <div key={i} className="flex items-center gap-3 p-3 rounded-xl"
+                      style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
+                        style={{ background: as.bg }}>
+                        {AIcon ? <AIcon size={14} style={{ color: as.color }} /> : <span className="text-[11px] font-bold" style={{ color: as.color }}>{ap.name[0]}</span>}
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-xs font-medium text-text-primary">{ap.name}</p>
+                        <p className="text-[10px] text-text-muted">{ap.role}</p>
+                      </div>
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                        style={{ background: as.bg, color: as.color }}>
+                        {as.label}
+                      </span>
                     </div>
-                    <div className="flex-1">
-                      <p className="text-xs font-medium text-text-primary">{ap.name}</p>
-                      <p className="text-[10px] text-text-muted">{ap.role}</p>
-                    </div>
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
-                      style={{ background: as.bg, color: as.color }}>
-                      {as.label}
-                    </span>
-                  </div>
-                )
-              })}
+                  )
+                })}
+              </div>
             </div>
+          )}
+
+          {/* Governance trail timeline */}
+          <div>
+            <p className="section-label mb-3">Governance Thread</p>
+            <GovernanceTimeline gov={factGovernance[proposal.factId] || {}} />
           </div>
 
           <div className="rounded-xl p-4" style={{ background: 'rgba(124,92,252,0.05)', border: '1px solid rgba(124,92,252,0.15)' }}>
             <p className="text-[10px] font-semibold mb-1" style={{ color: '#a78bfa' }}>Governance Notice</p>
             <p className="text-[11px] text-text-muted leading-relaxed">
-              All listed approvers must sign off before this proposal can be merged into the Truth Plane. Approval is recorded in the governance trail and is immutable once submitted.
+              All listed approvers must sign off before this proposal can be merged into the Truth Plane. Approval is recorded in the governance thread and is immutable once submitted.
             </p>
           </div>
         </div>
@@ -1626,7 +1645,7 @@ function EditProposalModal({ proposal, onClose, onSave }) {
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-1">
-                    <label className="text-[10px] text-text-muted">Department Kb</label>
+                    <label className="text-[10px] text-text-muted">Knowledge Base</label>
                     <select className="input-base text-xs" value={tag} onChange={e => setTag(e.target.value)}>
                       {EDIT_TAGS.map(t => <option key={t}>{t}</option>)}
                     </select>
@@ -1635,21 +1654,6 @@ function EditProposalModal({ proposal, onClose, onSave }) {
                     <label className="text-[10px] text-text-muted">Effective Date <span className="opacity-60">(optional)</span></label>
                     <input type="date" className="input-base text-xs"
                       value={effectiveDate} onChange={e => setEffectiveDate(e.target.value)} />
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] text-text-muted">Scope Impact</label>
-                  <div className="flex gap-1.5">
-                    {EDIT_SCOPES.map(s => (
-                      <button key={s}
-                        className="flex-1 py-1.5 rounded-lg text-xs font-medium transition-all"
-                        style={scopeImpact === s
-                          ? { background: 'rgba(124,92,252,0.15)', border: '1px solid rgba(124,92,252,0.4)', color: '#a78bfa' }
-                          : { background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', color: '#64748b' }}
-                        onClick={() => setScopeImpact(s)}>
-                        {s}
-                      </button>
-                    ))}
                   </div>
                 </div>
               </div>
@@ -1681,63 +1685,96 @@ function EditProposalModal({ proposal, onClose, onSave }) {
 
                 {/* Approval mode */}
                 <div className="space-y-2">
-                  {[
-                    { mode: 'self', Icon: Zap,   label: 'Self-approve',  sub: 'I am sole author and approver. Fact becomes Verified immediately.',  color: '#2dd4bf', bg: 'rgba(45,212,191,0.08)',  border: 'rgba(45,212,191,0.35)',  activeBadge: '⚡ Auto-verified',   badgeBg: 'rgba(45,212,191,0.15)',  badgeColor: '#2dd4bf',  badgeBorder: 'rgba(45,212,191,0.3)'  },
-                    { mode: 'peer', Icon: Users, label: 'Peer approval',  sub: 'Requires sign-off from one or more peers before becoming Verified.', color: '#a78bfa', bg: 'rgba(167,139,250,0.08)', border: 'rgba(167,139,250,0.35)', activeBadge: 'Review queue',        badgeBg: 'rgba(167,139,250,0.15)', badgeColor: '#a78bfa', badgeBorder: 'rgba(167,139,250,0.3)' },
-                  ].map(({ mode, Icon, label, sub, color, bg, border, activeBadge, badgeBg, badgeColor, badgeBorder }) => (
-                    <button key={mode}
-                      className="w-full flex items-start gap-3 p-3 rounded-xl text-left transition-all"
-                      style={{ background: approvalMode === mode ? bg : 'rgba(255,255,255,0.02)', border: `1px solid ${approvalMode === mode ? border : 'rgba(255,255,255,0.08)'}` }}
-                      onClick={() => setApprovalMode(mode)}>
-                      <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
-                        style={{ background: approvalMode === mode ? bg : 'rgba(255,255,255,0.04)' }}>
-                        <Icon size={14} style={{ color: approvalMode === mode ? color : '#475569' }} />
+                  {/* Automatic */}
+                  <button
+                    className="w-full flex items-start gap-3 p-3 rounded-xl text-left transition-all"
+                    style={{
+                      background: approvalMode === 'self' ? 'rgba(45,212,191,0.08)' : 'rgba(255,255,255,0.02)',
+                      border: `1px solid ${approvalMode === 'self' ? 'rgba(45,212,191,0.35)' : 'rgba(255,255,255,0.08)'}`,
+                    }}
+                    onClick={() => setApprovalMode('self')}>
+                    <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
+                      style={{ background: approvalMode === 'self' ? 'rgba(45,212,191,0.15)' : 'rgba(255,255,255,0.04)' }}>
+                      <Zap size={14} style={{ color: approvalMode === 'self' ? '#2dd4bf' : '#475569' }} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <p className="text-xs font-semibold text-text-primary">Automatic</p>
+                        {approvalMode === 'self' && (
+                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+                            style={{ background: 'rgba(45,212,191,0.15)', color: '#2dd4bf', border: '1px solid rgba(45,212,191,0.3)' }}>
+                            ⚡ Auto-verified
+                          </span>
+                        )}
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <p className="text-xs font-semibold text-text-primary">{label}</p>
-                          {approvalMode === mode && (
-                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
-                              style={{ background: badgeBg, color: badgeColor, border: `1px solid ${badgeBorder}` }}>
-                              {activeBadge}
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-[11px] text-text-muted leading-snug">{sub}</p>
-                      </div>
-                      <div className="w-4 h-4 rounded-full flex items-center justify-center shrink-0 mt-1"
-                        style={{ background: approvalMode === mode ? color : 'transparent', border: `2px solid ${approvalMode === mode ? color : 'rgba(255,255,255,0.2)'}` }}>
-                        {approvalMode === mode && <div className="w-1.5 h-1.5 rounded-full bg-[#131825]" />}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-
-                {/* Peer options */}
-                {approvalMode === 'peer' && (
-                  <div className="space-y-3 rounded-xl p-3"
-                    style={{ background: 'rgba(124,92,252,0.05)', border: '1px solid rgba(124,92,252,0.18)' }}>
-                    {/* Reviewer picker — unlimited selection */}
-                    <div className="space-y-1">
-                      <p className="text-[11px] text-text-muted font-medium">
-                        Select one or more approvers — all must sign off before the fact becomes Verified.
+                      <p className="text-[11px] text-text-muted leading-snug">
+                        I am the sole author and approver. Fact becomes Verified immediately upon creation.
                       </p>
                     </div>
-                    <EditReviewerPicker selected={reviewers} onToggle={toggleReviewer} max={EDIT_PEOPLE.length} />
-                    {/* Attestation path */}
-                    <div className="flex items-center gap-1 pt-1">
-                      {['Create', ...reviewers.map((_, i) => `Approve${reviewers.length > 1 ? ` ${i + 1}` : ''}`), 'Verified'].map((step, i, arr) => (
-                        <React.Fragment key={step + i}>
+                    <div className="w-4 h-4 rounded-full flex items-center justify-center shrink-0 mt-1"
+                      style={{ background: approvalMode === 'self' ? '#2dd4bf' : 'transparent', border: `2px solid ${approvalMode === 'self' ? '#2dd4bf' : 'rgba(255,255,255,0.2)'}` }}>
+                      {approvalMode === 'self' && <div className="w-1.5 h-1.5 rounded-full bg-[#131825]" />}
+                    </div>
+                  </button>
+
+                  {/* Manual */}
+                  <button
+                    className="w-full flex items-start gap-3 p-3 rounded-xl text-left transition-all"
+                    style={{
+                      background: approvalMode === 'peer' ? 'rgba(167,139,250,0.08)' : 'rgba(255,255,255,0.02)',
+                      border: `1px solid ${approvalMode === 'peer' ? 'rgba(167,139,250,0.35)' : 'rgba(255,255,255,0.08)'}`,
+                    }}
+                    onClick={() => setApprovalMode('peer')}>
+                    <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
+                      style={{ background: approvalMode === 'peer' ? 'rgba(167,139,250,0.15)' : 'rgba(255,255,255,0.04)' }}>
+                      <Users size={14} style={{ color: approvalMode === 'peer' ? '#a78bfa' : '#475569' }} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <p className="text-xs font-semibold text-text-primary">Manual</p>
+                        {approvalMode === 'peer' && (
+                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+                            style={{ background: 'rgba(167,139,250,0.15)', color: '#a78bfa', border: '1px solid rgba(167,139,250,0.3)' }}>
+                            Review queue
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-text-muted leading-snug">
+                        Requires sign-off from one or more peers before becoming Verified.
+                      </p>
+                    </div>
+                    <div className="w-4 h-4 rounded-full flex items-center justify-center shrink-0 mt-1"
+                      style={{ background: approvalMode === 'peer' ? '#a78bfa' : 'transparent', border: `2px solid ${approvalMode === 'peer' ? '#a78bfa' : 'rgba(255,255,255,0.2)'}` }}>
+                      {approvalMode === 'peer' && <div className="w-1.5 h-1.5 rounded-full bg-[#131825]" />}
+                    </div>
+                  </button>
+                </div>
+
+                {/* Manual note card */}
+                {approvalMode === 'peer' && (
+                  <div className="rounded-xl p-3.5"
+                    style={{ background: 'rgba(124,92,252,0.05)', border: '1px solid rgba(124,92,252,0.18)' }}>
+                    <p className="text-[11px] text-text-muted leading-relaxed">
+                      Fact will enter the review queue and require sign-off from a peer reviewer before becoming Verified.
+                    </p>
+                    <div className="flex items-center gap-1 pt-3">
+                      {['Create', 'Approve', 'Verified'].map((step, i, arr) => (
+                        <React.Fragment key={step}>
                           <div className="flex flex-col items-center gap-0.5">
                             <div className="w-5 h-5 rounded-full flex items-center justify-center"
-                              style={{ background: i === arr.length - 1 ? 'rgba(34,197,94,0.15)' : 'rgba(167,139,250,0.12)', border: `1px solid ${i === arr.length - 1 ? 'rgba(34,197,94,0.4)' : 'rgba(167,139,250,0.3)'}` }}>
+                              style={{
+                                background: i === arr.length - 1 ? 'rgba(34,197,94,0.15)' : 'rgba(167,139,250,0.12)',
+                                border: `1px solid ${i === arr.length - 1 ? 'rgba(34,197,94,0.4)' : 'rgba(167,139,250,0.3)'}`,
+                              }}>
                               {i === arr.length - 1
                                 ? <CheckCircle size={9} style={{ color: '#4ade80' }} />
                                 : <span className="text-[8px] font-bold" style={{ color: '#a78bfa' }}>{i + 1}</span>}
                             </div>
-                            <p className="text-[8px] text-text-muted text-center leading-tight max-w-[44px]">{step.trim()}</p>
+                            <p className="text-[8px] text-text-muted text-center leading-tight max-w-[44px]">{step}</p>
                           </div>
-                          {i < arr.length - 1 && <ChevronRight size={9} className="text-text-muted opacity-25 shrink-0 mb-3" />}
+                          {i < arr.length - 1 && (
+                            <ChevronRight size={9} className="text-text-muted opacity-25 shrink-0 mb-3" />
+                          )}
                         </React.Fragment>
                       ))}
                     </div>
@@ -1801,6 +1838,7 @@ export default function TruthPlaneDetail() {
   const [selectedFact, setSelectedFact]       = useState(null)
   const [showFilters, setShowFilters]         = useState(false)
   const [proposeFact, setProposeFact]         = useState(null)
+  const [pendingApproval, setPendingApproval] = useState(null) // { item, onConfirm }
   const [breakGlassFact, setBreakGlassFact]  = useState(null)
   const [proposals, setProposals]             = useState(factProposals)
   const [bgRecords, setBgRecords]             = useState(breakGlassRecords)
@@ -1838,15 +1876,20 @@ export default function TruthPlaneDetail() {
   })
 
   const handleProposalApprove = (p) => {
-    // Approve this proposal; all other proposals for the same fact disappear
-    setProposals(prev =>
-      prev
-        .map(x => x.id === p.id ? { ...x, status: 'approved', approvers: (x.approvers||[]).map(a => ({ ...a, status: 'approved' })) } : x)
-        .filter(x => x.id === p.id || x.factId !== p.factId)
-    )
-    setSelectedProposal(null)
-    setToast({ message: `Proposal approved — competing proposals removed`, color: '#4ade80' })
-    setTimeout(() => setToast(null), 3500)
+    setPendingApproval({
+      item: p,
+      onConfirm: () => {
+        setProposals(prev =>
+          prev
+            .map(x => x.id === p.id ? { ...x, status: 'approved', approvers: (x.approvers||[]).map(a => ({ ...a, status: 'approved' })) } : x)
+            .filter(x => x.id === p.id || x.factId !== p.factId)
+        )
+        setSelectedProposal(null)
+        setPendingApproval(null)
+        setToast({ message: `Proposal approved — competing proposals removed`, color: '#4ade80' })
+        setTimeout(() => setToast(null), 3500)
+      }
+    })
   }
   const handleProposalReject = (p) => {
     // Only this proposal is removed; others for the same fact remain
@@ -1928,14 +1971,22 @@ export default function TruthPlaneDetail() {
   })
 
   const handleReviewApprove = (item) => {
-    const next     = (item.current_approvals || 0) + 1
-    const required = item.required_approvals || 1
-    setReviewItems(prev => prev.map(r =>
-      r.id === item.id
-        ? { ...r, current_approvals: next, status: next >= required ? 'approved' : r.status }
-        : r
-    ))
-    setSelectedReview(null)
+    setPendingApproval({
+      item: { ...item, _isReviewItem: true },
+      onConfirm: () => {
+        const next     = (item.current_approvals || 0) + 1
+        const required = item.required_approvals || 1
+        setReviewItems(prev => prev.map(r =>
+          r.id === item.id
+            ? { ...r, current_approvals: next, status: next >= required ? 'approved' : r.status }
+            : r
+        ))
+        setSelectedReview(null)
+        setPendingApproval(null)
+        setToast({ message: `Review item approved`, color: '#4ade80' })
+        setTimeout(() => setToast(null), 3000)
+      }
+    })
   }
 
   const handleReviewEscalate = (item) => {
@@ -3328,6 +3379,14 @@ export default function TruthPlaneDetail() {
           onPropose={(item) => { const f = truthFacts.find(f => f.id === item.factId); if (f) { setProposeFact(f); setSelectedReview(null) } }}
           onRequestEvidence={handleReviewRequestEvidence}
           onEscalate={handleReviewEscalate} />
+      )}
+
+      {/* Approve Confirmation modal */}
+      {pendingApproval && (
+        <ApproveConfirmModal
+          item={pendingApproval.item}
+          onConfirm={pendingApproval.onConfirm}
+          onCancel={() => setPendingApproval(null)} />
       )}
 
       {/* Propose Change modal */}
