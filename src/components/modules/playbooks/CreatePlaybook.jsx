@@ -231,8 +231,15 @@ function TemplateCard({ tpl, selected, onSelect }) {
   )
 }
 
+// ── Template → existing playbook ID map (for prototype navigation) ───────────
+const TEMPLATE_PB_MAP = {
+  'new-lead':          'PB-001',
+  'no-show':           'PB-002',
+  'service-retention': 'PB-003',
+}
+
 // ── Simulation preview slide-out ──────────────────────────────────────────────
-function SimulationPreview({ templateId, onClose }) {
+function SimulationPreview({ templateId, onClose, onEditPlaybook }) {
   const tpl  = TEMPLATES.find(t => t.id === templateId)
   const data = SIM_DATA[templateId]
   if (!tpl || !data) return null
@@ -345,7 +352,8 @@ function SimulationPreview({ templateId, onClose }) {
             style={{ color: 'var(--text-muted)' }} onClick={onClose}>
             Close
           </button>
-          <button className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:brightness-110"
+          <button onClick={onEditPlaybook}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:brightness-110"
             style={{ background: 'linear-gradient(135deg,#7c5cfc,#3b82f6)', color: '#fff', boxShadow: '0 2px 12px rgba(124,92,252,0.35)' }}>
             <Sparkles size={13} /> Edit Playbook
           </button>
@@ -797,7 +805,13 @@ export default function CreatePlaybook() {
       {showSimPreview && selectedTpl && (
         <SimulationPreview
           templateId={selectedTpl}
-          onClose={() => setShowSimPreview(false)} />
+          onClose={() => setShowSimPreview(false)}
+          onEditPlaybook={() => {
+            const tpl = TEMPLATES.find(t => t.id === selectedTpl)
+            const pbId = TEMPLATE_PB_MAP[selectedTpl] || 'PB-001'
+            navigate(`/playbooks/${pbId}`, { state: { copyName: `${tpl?.name} (Copy)` } })
+          }}
+        />
       )}
     </div>
   )

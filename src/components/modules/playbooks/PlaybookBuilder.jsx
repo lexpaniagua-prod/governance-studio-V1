@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { truthPacks as KNOWLEDGE_PACKS } from '../../../data/mockKnowledge'
@@ -9,7 +9,7 @@ import {
   ChevronDown, ChevronUp, AlertTriangle, Plus, Trash2,
   Clock, Activity, BarChart2, Lock, BookOpen,
   UserCheck, Users, MessageSquare, Search,
-  Flag, XCircle, PlayCircle, GitBranch,
+  Flag, XCircle, PlayCircle, GitBranch, RotateCcw,
 } from 'lucide-react'
 
 // ── Tenant / Rooftop mock data ────────────────────────────────────────────────
@@ -114,6 +114,28 @@ const INITIAL = {
   approvalRequired: '',
   escalationPath: '',
   versionNote: '',
+  // Human Intervention
+  humanHandoffTriggers: [
+    { id: 1, label: 'High purchase intent detected',      desc: 'e.g., "Can I come in today?" or "Ready to buy."',   enabled: true },
+    { id: 2, label: 'Customer requests in-person visit',  desc: 'Requires appointment scheduling and coordination.', enabled: true },
+    { id: 3, label: 'Trade-in or financing complexity',   desc: 'Credit questions, payoff amounts, or trade valuations.', enabled: true },
+    { id: 4, label: 'Negotiation or pricing sensitivity', desc: 'Price objections, competitive quotes, or discount requests.', enabled: true },
+    { id: 5, label: 'Negative sentiment detected',        desc: 'Frustration, complaints, or dissatisfaction signals.', enabled: true },
+    { id: 6, label: 'Policy-restricted topic raised',     desc: 'Legal issues, warranty disputes, or recall questions.', enabled: true },
+  ],
+  humanHandoffCustom: '',
+  humanPostHandoff: 'original-rep',
+  humanReviewRequirements: [
+    { id: 1, label: 'Require review for first contact attempt',           enabled: false },
+    { id: 2, label: 'Require review for all phone call scripts',          enabled: true  },
+    { id: 3, label: 'Require review for sensitive topic responses',       enabled: false },
+    { id: 4, label: 'Require review for price negotiations or discounts', enabled: false },
+    { id: 5, label: 'Require review for trade-in value discussions',      enabled: false },
+    { id: 6, label: 'Require review for competitor comparisons',          enabled: false },
+    { id: 7, label: 'Require review for delivery timeline commitments',   enabled: false },
+  ],
+  humanReviewCustom: '',
+  humanApprovalTimeout: '4 hours',
 }
 
 // ── Sidebar field definitions per step ───────────────────────────────────────
@@ -271,6 +293,205 @@ function Accordion({ label, icon: Icon, children, defaultOpen = false }) {
   )
 }
 
+// ── AI Assist Widget ──────────────────────────────────────────────────────────
+const AI_ASSIST_ACTIONS = [
+  { id: 'generate',   label: 'Generate',       Icon: Sparkles   },
+  { id: 'rewrite',    label: 'Rewrite',         Icon: RotateCcw  },
+  { id: 'shorten',    label: 'Shorten',         Icon: AlignLeft  },
+  { id: 'specific',   label: 'Make Specific',   Icon: Target     },
+  { id: 'actionable', label: 'Make Actionable', Icon: Zap        },
+]
+
+const AI_SUGGESTIONS = {
+  generate: {
+    description:      'Orchestrates a personalized, multi-touch engagement sequence triggered by key customer lifecycle moments, using NBA to optimize timing and channel selection for maximum impact.',
+    businessMeaning:  'This moment signals a critical transition in the customer relationship — one that, if engaged correctly, significantly increases long-term retention and expansion potential.',
+    strategyNotes:    'Prioritize early value demonstration over volume of outreach. NBA should weight engagement signals from the first 14 days heavily in all subsequent decisioning.',
+    phaseNotes:       "This phase sets the tone for the entire playbook. Ensure messaging is personalized to the account's industry segment and that timing respects prior contact cadence.",
+    gateDescription:  'This gate ensures only eligible, consented accounts enter execution — preventing wasted outreach and compliance violations before any action is taken.',
+    internalNotes:    'Review quarterly with CS leadership to validate phase triggers align with current GTM motion. Escalation paths may shift with org structure changes.',
+    default:          'Engages the target segment at the optimal moment with context-aware messaging, balancing automation efficiency with the need for human oversight on high-value interactions.',
+  },
+  rewrite: {
+    description:      'A data-driven engagement playbook that activates automatically when key account signals are detected, coordinating AI-authored outreach with human review at critical decision points.',
+    businessMeaning:  'Marks the point at which proactive intervention yields the highest ROI — acting here converts passive accounts into active participants in the customer success journey.',
+    strategyNotes:    'The core objective is conversion efficiency: each phase should reduce friction in the customer\'s path to the next milestone, with NBA stepping back when confidence drops below threshold.',
+    phaseNotes:       'Revised: focus this phase on establishing trust through relevance, not frequency. One targeted, well-timed action outperforms three generic follow-ups.',
+    gateDescription:  'Rewritten: validates account eligibility across consent, engagement history, and active suppression flags before allowing execution to proceed.',
+    internalNotes:    'Updated for Q2 GTM alignment. Verify owner assignment reflects current team structure before activating.',
+    default:          'Triggers a structured, cadenced engagement sequence aligned to account health signals, with approval checkpoints at each phase transition.',
+  },
+  shorten: {
+    description:      'Automates multi-phase outreach triggered by key account signals, with NBA managing timing and channel selection.',
+    businessMeaning:  'Signals peak intervention opportunity — proactive engagement here drives measurable retention and expansion outcomes.',
+    strategyNotes:    'Optimize for conversion efficiency; NBA prioritizes high-confidence actions and defers to human review when signals are ambiguous.',
+    phaseNotes:       'Personalized, timely outreach based on engagement data. Avoid over-contact.',
+    gateDescription:  'Blocks execution if required eligibility conditions are not met.',
+    internalNotes:    'Align with GTM motion each quarter. Update escalation paths as org evolves.',
+    default:          'Targeted engagement sequence triggered by account signals, with human review at key decision points.',
+  },
+  specific: {
+    description:      'Targets enterprise accounts (ARR > $50K) within 48 hours of contract signing. Triggers a 4-phase onboarding sequence gated by CRM status, email consent, and no active suppression flags.',
+    businessMeaning:  'This event indicates the account has passed the highest-risk churn window (days 1–14) and is ready for proactive expansion discovery. NBA should shift from retention to growth mode.',
+    strategyNotes:    'Success is defined as the account reaching Feature Adoption Score > 70 within 30 days. NBA should deprioritize outreach to contacts with fewer than 2 product logins in the past 7 days.',
+    phaseNotes:       'Phase activates only if prior phase email open rate exceeds 40%, or a product login occurs within 3 days of prior phase completion.',
+    gateDescription:  'Gate passes only when: (1) email consent is active, (2) no suppression flag exists, and (3) account status is "Active" in CRM with a confirmed billing contact.',
+    internalNotes:    'Applicable to Enterprise and Mid-Market segments only. Exclude SMB accounts with fewer than 10 seats. CSM must be assigned before activation.',
+    default:          'Applies to accounts matching: segment = Enterprise, health score < 70, no active playbooks, consent verified across Email and SMS channels.',
+  },
+  actionable: {
+    description:      'When triggered: (1) send personalized welcome via optimal channel, (2) create CSM onboarding task in CRM, (3) schedule activation check-in at day 7, (4) surface expansion signal to AE at day 21.',
+    businessMeaning:  'When this moment fires: pause cold outreach, activate warm-handoff sequence, notify assigned CSM within 1 hour, and update account stage to "Active Onboarding" in CRM.',
+    strategyNotes:    'NBA should: auto-send when confidence ≥ 75%, create draft for review at 60–74%, and escalate to CSM when below 60%. Re-evaluate if success rate drops below 65%.',
+    phaseNotes:       'Step 1: trigger message within 2 hours of phase activation. Step 2: if no response in 72 hours, escalate to CSM with full context. Step 3: log outcome to CRM regardless of response.',
+    gateDescription:  'Action if gate fails: (1) log blocked event to CRM, (2) notify assigned rep, (3) re-evaluate eligibility in 7 days — do not discard the record.',
+    internalNotes:    'Required actions: (1) validate gate logic with compliance team by end of month. (2) update escalation path after Q2 reorg. (3) archive v1.x configs after v2.0 goes live.',
+    default:          'On activation: send tailored outreach within 2 hours, create rep task if no engagement in 48 hours, escalate to manager if confidence falls below threshold after Phase 2.',
+  },
+}
+
+function AIAssistWidget({ fieldKey = 'default', currentValue = '', onAccept }) {
+  const [open,       setOpen]       = useState(false)
+  const [loading,    setLoading]    = useState(false)
+  const [suggestion, setSuggestion] = useState(null)
+  const btnRef = useRef(null)
+  const [pos,  setPos]  = useState({ top: 0, left: 0 })
+
+  const handleOpen = () => {
+    if (btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect()
+      setPos({ top: r.bottom + 8, left: Math.max(8, r.right - 368) })
+    }
+    setSuggestion(null)
+    setLoading(false)
+    setOpen(true)
+  }
+
+  const handleClose = () => { setOpen(false); setSuggestion(null) }
+
+  const handleAction = (actionId) => {
+    setLoading(true)
+    setSuggestion(null)
+    setTimeout(() => {
+      const map = AI_SUGGESTIONS[actionId] || {}
+      setSuggestion(map[fieldKey] || map.default)
+      setLoading(false)
+    }, 1800)
+  }
+
+  const handleAccept = () => {
+    if (suggestion) { onAccept(suggestion); handleClose() }
+  }
+
+  return (
+    <>
+      <button ref={btnRef} type="button" onClick={handleOpen}
+        className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all hover:brightness-110"
+        style={{ background: 'rgba(124,92,252,0.18)', border: '1px solid rgba(124,92,252,0.3)', color: '#a78bfa' }}>
+        <Sparkles size={11} /> Assist
+      </button>
+
+      {open && createPortal(
+        <>
+          {/* Backdrop */}
+          <div className="fixed inset-0 z-[60]" onClick={handleClose} />
+
+          {/* Popover */}
+          <div className="fixed z-[61] w-[368px] rounded-2xl overflow-hidden"
+            style={{
+              top: pos.top, left: pos.left,
+              background: 'var(--bg-surface, #1a1a2e)',
+              border: '1px solid rgba(124,92,252,0.35)',
+              boxShadow: '0 12px 48px rgba(0,0,0,0.6), 0 0 0 1px rgba(124,92,252,0.12)',
+            }}>
+
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3"
+              style={{ background: 'rgba(124,92,252,0.1)', borderBottom: '1px solid rgba(124,92,252,0.2)' }}>
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-lg flex items-center justify-center"
+                  style={{ background: 'linear-gradient(135deg,#7c5cfc,#3b82f6)' }}>
+                  <Sparkles size={11} color="#fff" />
+                </div>
+                <span className="text-xs font-bold" style={{ color: 'var(--text-primary, #fff)' }}>AI Strategy Assistant</span>
+              </div>
+              <button type="button" onClick={handleClose}
+                className="p-1 rounded-lg transition-colors hover:bg-white/5"
+                style={{ color: 'var(--text-muted, #94a3b8)' }}>
+                <X size={13} />
+              </button>
+            </div>
+
+            <div className="p-4">
+              {/* Action grid */}
+              <div className="grid grid-cols-2 gap-2 mb-3">
+                {AI_ASSIST_ACTIONS.map(a => (
+                  <button key={a.id} type="button"
+                    onClick={() => handleAction(a.id)}
+                    disabled={loading}
+                    className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-[11px] font-medium transition-all hover:brightness-110 disabled:opacity-40"
+                    style={{
+                      background: 'rgba(255,255,255,0.05)',
+                      border: '1px solid rgba(255,255,255,0.09)',
+                      color: 'var(--text-secondary, #cbd5e1)',
+                      gridColumn: a.id === 'actionable' ? 'span 2' : undefined,
+                    }}>
+                    <a.Icon size={12} style={{ color: '#a78bfa', flexShrink: 0 }} />
+                    {a.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Suggestion area */}
+              {(loading || suggestion) && (
+                <div className="rounded-xl p-3 mb-3"
+                  style={{ background: 'rgba(124,92,252,0.07)', border: '1px solid rgba(124,92,252,0.22)' }}>
+                  {loading ? (
+                    <div className="flex items-center gap-2.5 py-1">
+                      <svg className="animate-spin shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="#a78bfa" strokeWidth="2.5"><path d="M21 12a9 9 0 11-6.219-8.56" /></svg>
+                      <span className="text-[11px]" style={{ color: '#a78bfa' }}>Generating suggestion…</span>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-[10px] font-semibold mb-1.5" style={{ color: '#a78bfa' }}>AI Suggestion:</p>
+                      <p className="text-[11px] leading-relaxed" style={{ color: 'var(--text-secondary, #cbd5e1)' }}>
+                        {suggestion}
+                      </p>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {/* Accept / Dismiss */}
+              {suggestion && !loading && (
+                <div className="flex gap-2 mb-3">
+                  <button type="button" onClick={handleAccept}
+                    className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all hover:brightness-110"
+                    style={{ background: 'linear-gradient(135deg,#7c5cfc,#3b82f6)', color: '#fff', boxShadow: '0 2px 12px rgba(124,92,252,0.4)' }}>
+                    <Check size={12} /> Accept Suggestion
+                  </button>
+                  <button type="button" onClick={() => setSuggestion(null)}
+                    className="px-4 rounded-xl text-xs font-semibold transition-all hover:brightness-110"
+                    style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-muted, #94a3b8)' }}>
+                    Dismiss
+                  </button>
+                </div>
+              )}
+
+              {/* Footer */}
+              <p className="text-[9px] leading-relaxed" style={{ color: 'var(--text-muted, #94a3b8)', opacity: 0.6 }}>
+                Your custom instructions guide NBA behavior. AI helps draft and refine them, but your saved values remain the source of truth.
+              </p>
+            </div>
+          </div>
+        </>,
+        document.body
+      )}
+    </>
+  )
+}
+
 // ── Step Sidebar ──────────────────────────────────────────────────────────────
 function StepSidebar({ stepId, data }) {
   const fields   = SIDEBAR_FIELDS[stepId] || []
@@ -358,7 +579,11 @@ function BasicsStep({ data, onChange }) {
               value={data.name} onChange={e => set('name', e.target.value)} />
           </div>
           <div>
-            <FieldLabel hint="Brief summary of what this playbook does and who it targets">Short Description</FieldLabel>
+            <div className="flex items-center justify-between mb-1.5">
+              <FieldLabel hint="Brief summary of what this playbook does and who it targets">Short Description</FieldLabel>
+              <AIAssistWidget fieldKey="description" currentValue={data.description}
+                onAccept={val => set('description', val)} />
+            </div>
             <textarea className="input-base w-full text-xs resize-none leading-relaxed" rows={3}
               placeholder="Describe the strategy, target segment, and expected outcome..."
               value={data.description} onChange={e => set('description', e.target.value)} />
@@ -810,10 +1035,8 @@ function BasicsStep({ data, onChange }) {
           <div className="space-y-2">
             <div className="flex items-center justify-between mb-2">
               <p className="text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>Team Notes & Context</p>
-              <button className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-lg font-medium transition-all hover:brightness-110"
-                style={{ background: 'rgba(124,92,252,0.12)', color: '#a78bfa', border: '1px solid rgba(124,92,252,0.25)' }}>
-                <Sparkles size={10} /> Assist
-              </button>
+              <AIAssistWidget fieldKey="internalNotes" currentValue={data.internalNotes}
+                onAccept={val => set('internalNotes', val)} />
             </div>
             <textarea className="input-base w-full text-xs resize-none leading-relaxed" rows={4}
               placeholder="Add internal context, rollout notes, or exceptions..."
@@ -989,10 +1212,8 @@ function MomentStep({ data, onChange }) {
       <div>
         <div className="flex items-center justify-between mb-1.5">
           <FieldLabel>Business Meaning <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(Optional)</span></FieldLabel>
-          <button type="button" className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all hover:brightness-110"
-            style={{ background: 'rgba(124,92,252,0.18)', border: '1px solid rgba(124,92,252,0.3)', color: '#a78bfa' }}>
-            <Sparkles size={11} /> Assist
-          </button>
+          <AIAssistWidget fieldKey="businessMeaning" currentValue={data.businessMeaning}
+            onAccept={val => set('businessMeaning', val)} />
         </div>
         <textarea className="input-base w-full text-xs resize-none leading-relaxed" rows={3}
           placeholder="Explain what this moment represents in the customer lifecycle and why it matters..."
@@ -1192,11 +1413,8 @@ function AddCustomGateModal({ onClose, onSave }) {
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <p className="text-[11px] font-semibold" style={{ color: 'var(--text-primary)' }}>Description</p>
-              <button type="button"
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all hover:brightness-110"
-                style={{ background: 'rgba(124,92,252,0.18)', border: '1px solid rgba(124,92,252,0.3)', color: '#a78bfa' }}>
-                <Sparkles size={11} /> Assist
-              </button>
+              <AIAssistWidget fieldKey="gateDescription" currentValue={description}
+                onAccept={val => setDescription(val)} />
             </div>
             <textarea
               className="input-base w-full text-xs resize-none leading-relaxed"
@@ -1708,11 +1926,8 @@ function ObjectiveStep({ data, onChange }) {
               </p>
             </div>
           </div>
-          <button type="button"
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold shrink-0 transition-all hover:brightness-110"
-            style={{ background: 'rgba(124,92,252,0.18)', border: '1px solid rgba(124,92,252,0.3)', color: '#a78bfa' }}>
-            <Sparkles size={11} /> Assist
-          </button>
+          <AIAssistWidget fieldKey="strategyNotes" currentValue={data.strategyNotes}
+            onAccept={val => set('strategyNotes', val)} />
         </div>
         <textarea className="input-base w-full text-xs resize-none leading-relaxed" rows={3}
           placeholder="Explain why this objective matters and how success should be interpreted..."
@@ -1969,7 +2184,11 @@ function PhasesStep({ data, onChange }) {
 
                   {/* Notes */}
                   <div>
-                    <FieldLabel>Notes <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(Optional)</span></FieldLabel>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <FieldLabel>Notes <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(Optional)</span></FieldLabel>
+                      <AIAssistWidget fieldKey="phaseNotes" currentValue={phase.notes || ''}
+                        onAccept={val => updatePhase(phase.id, { notes: val })} />
+                    </div>
                     <textarea className="input-base w-full text-xs resize-none" rows={2}
                       placeholder="Describe the purpose, pacing, or tone of this phase..."
                       value={phase.notes || ''} onChange={e => updatePhase(phase.id, { notes: e.target.value })} />
@@ -2345,6 +2564,284 @@ function TrustStep({ data, onChange }) {
               <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>No sensitive topics defined. Click <strong>+ Add Topic</strong> to add one.</p>
             </div>
           )}
+        </div>
+      </div>
+
+      {/* ── Human Intervention Settings ───────────────────────────────────────── */}
+      <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.09)' }}>
+
+        {/* Section header */}
+        <div className="flex items-center gap-3 px-5 py-3.5"
+          style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+            style={{ background: 'linear-gradient(135deg,#a78bfa,#60a5fa)', boxShadow: '0 2px 8px rgba(124,92,252,0.35)' }}>
+            <Users size={13} color="#fff" />
+          </div>
+          <div>
+            <p className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>Human Intervention Settings</p>
+            <p className="text-[10px] mt-0.5" style={{ color: 'var(--text-muted)' }}>Define when NBA should transfer control to a human representative</p>
+          </div>
+        </div>
+
+        <div className="p-4">
+          <div className="grid grid-cols-2 gap-3">
+
+            {/* ── Left panel: AI Handoff Triggers + Post-Handoff ── */}
+            <div className="rounded-xl flex flex-col overflow-hidden"
+              style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
+
+              {/* Sub-header */}
+              <div className="flex items-center gap-2 px-4 py-2.5"
+                style={{ background: 'rgba(255,255,255,0.025)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                <div className="w-5 h-5 rounded-md flex items-center justify-center"
+                  style={{ background: 'rgba(251,146,60,0.15)' }}>
+                  <UserCheck size={11} style={{ color: '#fb923c' }} />
+                </div>
+                <span className="text-[11px] font-semibold" style={{ color: '#fb923c' }}>AI Handoff to Human</span>
+              </div>
+
+              {/* Trigger list */}
+              <div className="p-3 flex flex-col gap-1.5">
+                {/* Sub-label */}
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-[11px] font-semibold" style={{ color: 'var(--text-secondary)' }}>
+                    Automatic Handoff Triggers
+                  </p>
+                </div>
+                <p className="text-[10px] -mt-1 mb-1" style={{ color: 'var(--text-muted)' }}>
+                  When AI should stop and transfer control to a human
+                </p>
+
+                {(data.humanHandoffTriggers || []).map(trigger => (
+                  <div key={trigger.id} className="flex items-start gap-2.5 px-3 py-2.5 rounded-lg"
+                    style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                    <button type="button"
+                      onClick={() => set('humanHandoffTriggers', (data.humanHandoffTriggers || []).map(t =>
+                        t.id === trigger.id ? { ...t, enabled: !t.enabled } : t))}
+                      className="rounded flex items-center justify-center shrink-0 transition-all mt-0.5"
+                      style={{
+                        width: 14, height: 14, minWidth: 14,
+                        background: trigger.enabled ? '#7c5cfc' : 'rgba(255,255,255,0.06)',
+                        border: `1.5px solid ${trigger.enabled ? '#7c5cfc' : 'rgba(255,255,255,0.2)'}`,
+                      }}>
+                      {trigger.enabled && <Check size={8} color="#fff" />}
+                    </button>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[11px] font-medium leading-snug" style={{ color: 'var(--text-secondary)' }}>
+                        {trigger.label}
+                      </p>
+                      {trigger.desc && (
+                        <p className="text-[10px] mt-0.5 leading-snug" style={{ color: 'var(--text-muted)' }}>
+                          {trigger.desc}
+                        </p>
+                      )}
+                    </div>
+                    <button type="button"
+                      onClick={() => set('humanHandoffTriggers', (data.humanHandoffTriggers || []).filter(t => t.id !== trigger.id))}
+                      className="p-0.5 rounded hover:bg-white/5 shrink-0 transition-all mt-0.5"
+                      style={{ color: 'var(--text-muted)' }}>
+                      <X size={11} />
+                    </button>
+                  </div>
+                ))}
+
+                {/* Custom trigger input */}
+                <div className="flex gap-2 pt-1">
+                  <input
+                    value={data.humanHandoffCustom || ''}
+                    onChange={e => set('humanHandoffCustom', e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        const val = (data.humanHandoffCustom || '').trim()
+                        if (val) onChange({ ...data,
+                          humanHandoffTriggers: [...(data.humanHandoffTriggers || []),
+                            { id: Date.now(), label: val, desc: '', enabled: true }],
+                          humanHandoffCustom: '',
+                        })
+                      }
+                    }}
+                    placeholder="e.g., Customer asks about competitor pricing"
+                    className="flex-1 text-[11px] rounded-lg px-3 py-2 outline-none"
+                    style={{ background: 'rgba(255,255,255,0.04)', color: 'var(--text-secondary)', border: '1px solid rgba(255,255,255,0.09)' }}
+                  />
+                  <button type="button"
+                    onClick={() => {
+                      const val = (data.humanHandoffCustom || '').trim()
+                      if (val) onChange({ ...data,
+                        humanHandoffTriggers: [...(data.humanHandoffTriggers || []),
+                          { id: Date.now(), label: val, desc: '', enabled: true }],
+                        humanHandoffCustom: '',
+                      })
+                    }}
+                    className="px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all hover:brightness-110"
+                    style={{ background: 'rgba(124,92,252,0.14)', color: '#a78bfa', border: '1px solid rgba(124,92,252,0.28)' }}>
+                    + Add
+                  </button>
+                </div>
+              </div>
+
+              {/* Post-Handoff Behavior */}
+              <div className="px-3 pb-3 pt-0">
+                <div className="pt-3 px-1" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-5 h-5 rounded-md flex items-center justify-center shrink-0"
+                      style={{ background: 'rgba(124,92,252,0.15)' }}>
+                      <User size={11} style={{ color: '#a78bfa' }} />
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-semibold" style={{ color: 'var(--text-secondary)' }}>Post-Handoff Behavior</p>
+                      <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Where to route the conversation after handoff</p>
+                    </div>
+                  </div>
+                  {[
+                    { val: 'original-rep',  label: 'Assign to original rep',    desc: 'Lead returns to the rep who originally owned it.'      },
+                    { val: 'sales-manager', label: 'Assign to Sales Manager',   desc: 'Escalate complex situations to management.'            },
+                    { val: 'unassigned',    label: 'Leave unassigned',          desc: 'Desk manager manually assigns based on availability.'  },
+                  ].map(opt => {
+                    const active = (data.humanPostHandoff || 'original-rep') === opt.val
+                    return (
+                      <div key={opt.val}
+                        onClick={() => set('humanPostHandoff', opt.val)}
+                        className="flex items-start gap-2.5 px-3 py-2.5 rounded-lg cursor-pointer mb-1.5 transition-all"
+                        style={{
+                          background: active ? 'rgba(124,92,252,0.08)' : 'rgba(255,255,255,0.02)',
+                          border: `1px solid ${active ? 'rgba(124,92,252,0.25)' : 'rgba(255,255,255,0.07)'}`,
+                        }}>
+                        <div className="mt-0.5 w-3 h-3 rounded-full shrink-0 flex items-center justify-center"
+                          style={{
+                            border: `1.5px solid ${active ? '#7c5cfc' : 'rgba(255,255,255,0.25)'}`,
+                          }}>
+                          {active && <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#7c5cfc' }} />}
+                        </div>
+                        <div>
+                          <p className="text-[11px] font-medium" style={{ color: active ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
+                            {opt.label}
+                          </p>
+                          <p className="text-[10px] mt-0.5" style={{ color: 'var(--text-muted)' }}>{opt.desc}</p>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* ── Right panel: Human-in-the-Loop Review ── */}
+            <div className="rounded-xl flex flex-col overflow-hidden"
+              style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
+
+              {/* Sub-header */}
+              <div className="flex items-center gap-2 px-4 py-2.5"
+                style={{ background: 'rgba(255,255,255,0.025)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                <div className="w-5 h-5 rounded-md flex items-center justify-center"
+                  style={{ background: 'rgba(245,158,11,0.15)' }}>
+                  <CheckCircle size={11} style={{ color: '#fbbf24' }} />
+                </div>
+                <span className="text-[11px] font-semibold" style={{ color: '#fbbf24' }}>Human-in-the-Loop Review</span>
+              </div>
+
+              {/* Review requirements */}
+              <div className="p-3 flex flex-col gap-1.5">
+                {/* Sub-label */}
+                <p className="text-[11px] font-semibold mb-0" style={{ color: 'var(--text-secondary)' }}>
+                  Review Requirements
+                </p>
+                <p className="text-[10px] -mt-1 mb-1" style={{ color: 'var(--text-muted)' }}>
+                  Require approval before sending
+                </p>
+
+                {(data.humanReviewRequirements || []).map(req => {
+                  const on = req.enabled
+                  return (
+                    <div key={req.id}
+                      onClick={() => set('humanReviewRequirements', (data.humanReviewRequirements || []).map(r =>
+                        r.id === req.id ? { ...r, enabled: !r.enabled } : r))}
+                      className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg cursor-pointer transition-all"
+                      style={{
+                        background: on ? 'rgba(245,158,11,0.06)' : 'rgba(255,255,255,0.025)',
+                        border: `1px solid ${on ? 'rgba(245,158,11,0.22)' : 'rgba(255,255,255,0.07)'}`,
+                      }}>
+                      <div className="rounded flex items-center justify-center shrink-0"
+                        style={{
+                          width: 14, height: 14, minWidth: 14,
+                          background: on ? '#7c5cfc' : 'rgba(255,255,255,0.06)',
+                          border: `1.5px solid ${on ? '#7c5cfc' : 'rgba(255,255,255,0.2)'}`,
+                        }}>
+                        {on && <Check size={8} color="#fff" />}
+                      </div>
+                      <span className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>{req.label}</span>
+                    </div>
+                  )
+                })}
+
+                {/* Custom review requirement input */}
+                <div className="flex gap-2 pt-1">
+                  <input
+                    value={data.humanReviewCustom || ''}
+                    onChange={e => set('humanReviewCustom', e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        const val = (data.humanReviewCustom || '').trim()
+                        if (val) onChange({ ...data,
+                          humanReviewRequirements: [...(data.humanReviewRequirements || []),
+                            { id: Date.now(), label: val, enabled: true }],
+                          humanReviewCustom: '',
+                        })
+                      }
+                    }}
+                    placeholder="e.g., Review messages mentioning financing"
+                    className="flex-1 text-[11px] rounded-lg px-3 py-2 outline-none"
+                    style={{ background: 'rgba(255,255,255,0.04)', color: 'var(--text-secondary)', border: '1px solid rgba(255,255,255,0.09)' }}
+                  />
+                  <button type="button"
+                    onClick={() => {
+                      const val = (data.humanReviewCustom || '').trim()
+                      if (val) onChange({ ...data,
+                        humanReviewRequirements: [...(data.humanReviewRequirements || []),
+                          { id: Date.now(), label: val, enabled: true }],
+                        humanReviewCustom: '',
+                      })
+                    }}
+                    className="px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all hover:brightness-110"
+                    style={{ background: 'rgba(124,92,252,0.14)', color: '#a78bfa', border: '1px solid rgba(124,92,252,0.28)' }}>
+                    + Add
+                  </button>
+                </div>
+                <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
+                  Define scenarios that require human review before sending.
+                </p>
+              </div>
+
+              {/* Approval timeout */}
+              <div className="px-3 pb-3 pt-0">
+                <div className="pt-3 px-1" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-5 h-5 rounded-md flex items-center justify-center shrink-0"
+                      style={{ background: 'rgba(245,158,11,0.12)' }}>
+                      <Clock size={11} style={{ color: '#fbbf24' }} />
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-semibold" style={{ color: 'var(--text-secondary)' }}>Manager Approval Timeout</p>
+                      <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Auto-skip if not reviewed within timeout</p>
+                    </div>
+                  </div>
+                  <select
+                    value={data.humanApprovalTimeout || '4 hours'}
+                    onChange={e => set('humanApprovalTimeout', e.target.value)}
+                    className="w-full text-xs rounded-lg px-3 py-2.5 outline-none"
+                    style={{ background: 'rgba(255,255,255,0.04)', color: 'var(--text-secondary)', border: '1px solid rgba(255,255,255,0.09)' }}>
+                    <option>1 hour</option>
+                    <option>2 hours</option>
+                    <option>4 hours</option>
+                    <option>8 hours</option>
+                    <option>24 hours</option>
+                    <option>48 hours</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+          </div>
         </div>
       </div>
 
@@ -3114,3 +3611,6 @@ export default function PlaybookBuilder() {
     </div>
   )
 }
+
+// ── Named exports for Configuration tab in PlaybookDetail ─────────────────────
+export { BasicsStep, MomentStep, GatesStep, ObjectiveStep, PhasesStep, TrustStep, INITIAL }
