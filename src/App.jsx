@@ -11,6 +11,10 @@ import TruthPlaneDetail from './components/modules/truth-plane/TruthPlaneDetail'
 import TruthFactDetail from './components/modules/truth-plane/TruthFactDetail'
 import Knowledge from './components/modules/knowledge/Knowledge'
 import TruthPackDetail from './components/modules/knowledge/TruthPackDetail'
+import Playbooks from './components/modules/playbooks/Playbooks'
+import CreatePlaybook from './components/modules/playbooks/CreatePlaybook'
+import PlaybookBuilder from './components/modules/playbooks/PlaybookBuilder'
+import PlaybookDetail from './components/modules/playbooks/PlaybookDetail'
 
 export default function App() {
   return (
@@ -27,6 +31,10 @@ export default function App() {
         <Route path="/truth-plane" element={<TruthPlane />} />
         <Route path="/truth-plane/:id" element={<TruthPlaneDetail />} />
         <Route path="/truth-plane/:id/fact/:factId" element={<TruthFactDetail />} />
+        <Route path="/playbooks" element={<Playbooks />} />
+        <Route path="/playbooks/create" element={<CreatePlaybook />} />
+        <Route path="/playbooks/create/scratch" element={<PlaybookBuilder />} />
+        <Route path="/playbooks/:id" element={<PlaybookDetail />} />
       </Routes>
     </Layout>
   )

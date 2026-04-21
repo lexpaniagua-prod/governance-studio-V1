@@ -17,7 +17,8 @@
       "Bash(cmd /c \"netstat -ano | findstr :5173\")",
       "Bash(node -e \"const l = require\\('lucide-react'\\); console.log\\(Object.keys\\(l\\).filter\\(k => k.toLowerCase\\(\\).includes\\('send'\\)\\)\\)\")",
       "Bash(node -e \"const l = require\\('lucide-react'\\); ['Award','Layers','Package','PenLine','XCircle','FileText','SendHorizonal'].forEach\\(k => console.log\\(k, !!l[k]\\)\\)\")",
-      "Bash(node -e ' *)"
+      "Bash(node -e ' *)",
+      "Bash(npx vite *)"
     ]
   }
 }

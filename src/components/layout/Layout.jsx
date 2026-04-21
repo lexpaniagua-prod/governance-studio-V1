@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import {
   Library, Shield, LayoutGrid, Wrench, Rocket, Settings,
   CheckSquare, ChevronRight, Search, Bell, HelpCircle,
-  Sun, Moon, ChevronLeft,
+  Sun, Moon, ChevronLeft, BookOpen,
 } from 'lucide-react'
 
 const NAV = [
@@ -12,6 +12,7 @@ const NAV = [
   { icon: Library,     label: 'Intelligence Library',path: '/intelligence-library' },
   { icon: Shield,      label: 'Truth Plane',         path: '/truth-plane' },
   { icon: LayoutGrid,  label: 'Sandbox Plane',       path: '/sandbox' },
+  { icon: BookOpen,    label: 'Playbooks',           path: '/playbooks' },
   { icon: Wrench,      label: 'Builder',             path: null,                   disabled: true },
   { icon: Rocket,      label: 'Deploy',              path: null,                   disabled: true },
   { icon: Settings,    label: 'Admin',               path: null,                   disabled: true },
