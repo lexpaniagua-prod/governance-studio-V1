@@ -1138,6 +1138,7 @@ function BundlesTab() {
 // ── Promotions Tab ────────────────────────────────────────────────────────────
 function PromotionsTab({ onOpenBuilder, sandboxId }) {
   const [selected, setSelected] = useState(null)
+  const [showFilters, setShowFilters] = useState(false)
   const statusVariant = { promoted: 'promoted', 'in-progress': 'in-progress', queue: 'queue' }
   const statusLabel = { promoted: 'Promoted', 'in-progress': 'In Progress', queue: 'Queue' }
 
@@ -1145,7 +1146,21 @@ function PromotionsTab({ onOpenBuilder, sandboxId }) {
     <div className="space-y-3">
       <div className="flex items-center gap-2">
         <SearchBar placeholder="Search promotion packages..." value="" onChange={() => {}} />
-        <button className="btn-secondary gap-1.5"><Filter size={13} /> All filters</button>
+        <select className="input-base text-xs px-3 py-2" style={{ width: 'auto' }}>
+          <option>All Status</option>
+          <option>Promoted</option>
+          <option>In Progress</option>
+          <option>Queue</option>
+        </select>
+        <select className="input-base text-xs px-3 py-2" style={{ width: 'auto' }}>
+          <option>All Targets</option>
+          <option>Financial Truth Plane</option>
+          <option>Technical Truth Plane</option>
+          <option>Legal Truth Plane</option>
+        </select>
+        <button className="btn-secondary gap-1.5" onClick={() => setShowFilters(true)}>
+          <Filter size={13} /> All filters
+        </button>
         <button className="btn-primary ml-auto gap-1.5" onClick={onOpenBuilder}>
           <Sparkles size={13} /> New Promotion
         </button>
@@ -1195,6 +1210,30 @@ function PromotionsTab({ onOpenBuilder, sandboxId }) {
 
       {selected && (
         <PromotionSlideOut pkg={selected} sandboxId={sandboxId} onClose={() => setSelected(null)} />
+      )}
+      {showFilters && (
+        <AllFiltersPanel onClose={() => setShowFilters(false)}>
+          <FilterSection label="Package Status">
+            {['Promoted', 'In Progress', 'Queue'].map(o => (
+              <button key={o} className="filter-pill">{o}</button>
+            ))}
+          </FilterSection>
+          <FilterSection label="Target Truth Plane">
+            {['Financial Truth Plane', 'Technical Truth Plane', 'Legal Truth Plane'].map(o => (
+              <button key={o} className="filter-pill">{o}</button>
+            ))}
+          </FilterSection>
+          <FilterSection label="Tags">
+            {['Financial', 'Revenue', 'Q1', 'Cloud', 'Infrastructure', 'Migration', 'Legal', 'Partnerships'].map(o => (
+              <button key={o} className="filter-pill">{o}</button>
+            ))}
+          </FilterSection>
+          <FilterSection label="Owner">
+            {['Sarah Chen', 'Michael Torres', 'Emma Wilson'].map(o => (
+              <button key={o} className="filter-pill">{o}</button>
+            ))}
+          </FilterSection>
+        </AllFiltersPanel>
       )}
     </div>
   )
