@@ -802,16 +802,15 @@ function ProposalSlideOut({ proposal, onClose, onApprove, onReject, onSupersede,
       }>
 
       {/* Tabs */}
-      <div className="tab-bar mb-4">
+      <div className="tab-bar mb-4" style={{ overflowX: 'auto', flexShrink: 0 }}>
         {[
           'Overview',
           ...(claimsTab ? [claimsTab] : []),
           `Evidence (${(proposal.evidence||[]).length})`,
-          commentTab,
           'What Changes',
           'Governance Thread',
         ].map(t => (
-          <button key={t} className={clsx('tab-btn', tab === t && 'active')} onClick={() => setTab(t)}>{t}</button>
+          <button key={t} className={clsx('tab-btn', tab === t && 'active')} style={{ flex: 'none' }} onClick={() => setTab(t)}>{t}</button>
         ))}
       </div>
 
@@ -2574,11 +2573,10 @@ export default function TruthPlaneDetail() {
               <div className="space-y-4">
 
                 {/* Stats row */}
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 gap-3">
                   {[
-                    { label: 'SOURCE DOCS', value: 18,     Icon: Database,    color: '#a78bfa', bg: 'rgba(124,92,252,0.08)', border: 'rgba(124,92,252,0.2)' },
-                    { label: 'BUNDLES',     value: 4,      Icon: Package,     color: '#60a5fa', bg: 'rgba(59,130,246,0.08)',  border: 'rgba(59,130,246,0.2)' },
-                    { label: 'EVIDENCE',    value: 'High', Icon: TrendingUp,  color: '#4ade80', bg: 'rgba(34,197,94,0.08)',   border: 'rgba(34,197,94,0.2)'  },
+                    { label: 'SOURCE DOCS', value: 18, Icon: Database, color: '#a78bfa', bg: 'rgba(124,92,252,0.08)', border: 'rgba(124,92,252,0.2)' },
+                    { label: 'BUNDLES',     value: 4,  Icon: Package,  color: '#60a5fa', bg: 'rgba(59,130,246,0.08)',  border: 'rgba(59,130,246,0.2)' },
                   ].map(({ label, value, Icon, color, bg, border }) => (
                     <div key={label} className="rounded-xl p-5 text-center" style={{ background: bg, border: `1px solid ${border}` }}>
                       <Icon size={20} className="mx-auto mb-2.5" style={{ color }} />
