@@ -335,8 +335,8 @@ function FactSlideOut({ fact, onClose, onExpand, onPropose, onBreakGlass, bgReco
         <div className="mt-4 space-y-3">
           {/* Summary bar */}
           <div className="flex items-center justify-between">
-            <p className="section-label">Source Claims</p>
-            <span className="text-[10px] text-text-muted">{evidence.length} claim{evidence.length !== 1 ? 's' : ''} · ranked by confidence</span>
+            <p className="section-label">Sources</p>
+            <span className="text-[10px] text-text-muted">{evidence.length} source{evidence.length !== 1 ? 's' : ''} · ranked by confidence</span>
           </div>
 
           {evidence.length === 0 ? (
@@ -1837,6 +1837,10 @@ export default function TruthPlaneDetail() {
   ]
   const [selectedFact, setSelectedFact]       = useState(null)
   const [showFilters, setShowFilters]         = useState(false)
+  const [factFilterExpiry,    setFactFilterExpiry]    = useState('All')
+  const [factFilterKB,        setFactFilterKB]        = useState('All')
+  const [factFilterApproved,  setFactFilterApproved]  = useState('All')
+  const [factFilterPromoted,  setFactFilterPromoted]  = useState('All')
   const [proposeFact, setProposeFact]         = useState(null)
   const [pendingApproval, setPendingApproval] = useState(null) // { item, onConfirm }
   const [breakGlassFact, setBreakGlassFact]  = useState(null)
@@ -2157,10 +2161,70 @@ export default function TruthPlaneDetail() {
 
           return (
             <div className="space-y-3">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <SearchBar placeholder="Search facts..." value="" onChange={() => {}} />
-                <select className="input-base text-xs px-3 py-2" style={{ width: 'auto' }}><option>Status</option></select>
-                <select className="input-base text-xs px-3 py-2" style={{ width: 'auto' }}><option>Tag</option></select>
+
+                {/* Expiration */}
+                <select
+                  className="input-base text-xs px-3 py-2"
+                  style={{ width: 'auto' }}
+                  value={factFilterExpiry}
+                  onChange={e => setFactFilterExpiry(e.target.value)}>
+                  <option value="All">Expiration</option>
+                  <option value="Expired">Expired</option>
+                  <option value="Expiring Soon">Expiring Soon</option>
+                  <option value="Valid">Valid</option>
+                </select>
+
+                {/* Knowledge Base */}
+                <select
+                  className="input-base text-xs px-3 py-2"
+                  style={{ width: 'auto' }}
+                  value={factFilterKB}
+                  onChange={e => setFactFilterKB(e.target.value)}>
+                  <option value="All">Knowledge</option>
+                  <option value="Finance">Finance</option>
+                  <option value="Compliance">Compliance</option>
+                  <option value="Eligibility">Eligibility</option>
+                  <option value="Legal">Legal</option>
+                  <option value="Operations">Operations</option>
+                  <option value="Contracts">Contracts</option>
+                </select>
+
+                {/* Approved By */}
+                <select
+                  className="input-base text-xs px-3 py-2"
+                  style={{ width: 'auto' }}
+                  value={factFilterApproved}
+                  onChange={e => setFactFilterApproved(e.target.value)}>
+                  <option value="All">Approved By</option>
+                  <option>Sarah Chen</option>
+                  <option>Michael Torres</option>
+                  <option>Emma Wilson</option>
+                  <option>James Rodriguez</option>
+                  <option>Lisa Anderson</option>
+                  <option>David Kim</option>
+                  <option>James Park</option>
+                  <option>Emma Rodriguez</option>
+                </select>
+
+                {/* Promoted By */}
+                <select
+                  className="input-base text-xs px-3 py-2"
+                  style={{ width: 'auto' }}
+                  value={factFilterPromoted}
+                  onChange={e => setFactFilterPromoted(e.target.value)}>
+                  <option value="All">Promoted By</option>
+                  <option>James Park</option>
+                  <option>Alex Kim</option>
+                  <option>Lisa Anderson</option>
+                  <option>Sarah Chen</option>
+                  <option>Emma Rodriguez</option>
+                  <option>David Kim</option>
+                  <option>Michael Torres</option>
+                  <option>Alex Rivera</option>
+                </select>
+
                 <button className="btn-secondary gap-1.5" onClick={() => setShowFilters(true)}>
                   <Filter size={13} /> Filters
                 </button>
@@ -3471,17 +3535,40 @@ export default function TruthPlaneDetail() {
 
       {showFilters && (
         <AllFiltersPanel onClose={() => setShowFilters(false)}>
-          <FilterSection label="Status">
-            {['All','Active','Archived','Draft','Under Review'].map(o => <button key={o} className="filter-pill">{o}</button>)}
+          <FilterSection label="Lifecycle / Expiration">
+            {['Expired', 'Expiring Soon (30 days)', 'Valid'].map(o => (
+              <button key={o} className="filter-pill">{o}</button>
+            ))}
           </FilterSection>
-          <FilterSection label="Scope">
-            {['Global','Regional','Departmental','Project-specific'].map(o => <button key={o} className="filter-pill">{o}</button>)}
+          <FilterSection label="Knowledge Base">
+            {['Finance', 'Compliance', 'Eligibility', 'Legal', 'Operations', 'Contracts'].map(o => (
+              <button key={o} className="filter-pill">{o}</button>
+            ))}
           </FilterSection>
-          <FilterSection label="Category">
-            {['Policy','Procedure','Requirement','Guideline','Standard'].map(o => <button key={o} className="filter-pill">{o}</button>)}
+          <FilterSection label="Fact Status">
+            {['Verified', 'Needs Review', 'Conflict', 'Break Glass', 'In Proposal'].map(o => (
+              <button key={o} className="filter-pill">{o}</button>
+            ))}
           </FilterSection>
           <FilterSection label="Risk Level">
-            {['Low','Medium','High','Critical'].map(o => <button key={o} className="filter-pill">{o}</button>)}
+            {['Low', 'Medium', 'High'].map(o => (
+              <button key={o} className="filter-pill">{o}</button>
+            ))}
+          </FilterSection>
+          <FilterSection label="Approved By">
+            {['Sarah Chen', 'Michael Torres', 'Emma Wilson', 'James Rodriguez', 'Lisa Anderson', 'David Kim', 'James Park', 'Emma Rodriguez'].map(o => (
+              <button key={o} className="filter-pill">{o}</button>
+            ))}
+          </FilterSection>
+          <FilterSection label="Promoted By">
+            {['James Park', 'Alex Kim', 'Lisa Anderson', 'Sarah Chen', 'Emma Rodriguez', 'David Kim', 'Michael Torres', 'Alex Rivera'].map(o => (
+              <button key={o} className="filter-pill">{o}</button>
+            ))}
+          </FilterSection>
+          <FilterSection label="Polarity">
+            {['Positive', 'Negative', 'Neutral'].map(o => (
+              <button key={o} className="filter-pill">{o}</button>
+            ))}
           </FilterSection>
         </AllFiltersPanel>
       )}
