@@ -17,9 +17,52 @@ export function Badge({ variant = 'gray', children, className }) {
   return <span className={clsx('badge', map[variant] || 'badge', className)}>{children}</span>
 }
 
-export function Chip({ color = 'gray', children }) {
+export function Chip({ color = 'gray', children, tooltip }) {
+  const [show, setShow] = React.useState(false)
   const map = { green: 'chip-green', amber: 'chip-amber', red: 'chip-red', purple: 'chip-purple', blue: 'chip-blue', gray: 'chip-gray' }
-  return <span className={clsx('signal-chip', map[color])}>{children}</span>
+  if (!tooltip) return <span className={clsx('signal-chip', map[color])}>{children}</span>
+  return (
+    <span
+      className={clsx('signal-chip', map[color])}
+      style={{ position: 'relative', cursor: 'default' }}
+      onMouseEnter={() => setShow(true)}
+      onMouseLeave={() => setShow(false)}>
+      {children}
+      {show && (
+        <span style={{
+          position: 'absolute',
+          bottom: 'calc(100% + 7px)',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          background: '#1a2033',
+          border: '1px solid rgba(255,255,255,0.12)',
+          color: '#cbd5e1',
+          fontSize: '11px',
+          lineHeight: '1.5',
+          padding: '6px 10px',
+          borderRadius: '8px',
+          whiteSpace: 'nowrap',
+          zIndex: 9999,
+          pointerEvents: 'none',
+          boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
+        }}>
+          {tooltip}
+          {/* arrow */}
+          <span style={{
+            position: 'absolute',
+            top: '100%',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: 0,
+            height: 0,
+            borderLeft: '5px solid transparent',
+            borderRight: '5px solid transparent',
+            borderTop: '5px solid #1a2033',
+          }} />
+        </span>
+      )}
+    </span>
+  )
 }
 
 export function TabBar({ tabs, active, onChange }) {

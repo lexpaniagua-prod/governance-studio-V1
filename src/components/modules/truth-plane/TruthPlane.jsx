@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Shield, Filter, LayoutGrid, List, Clock, Eye, X, ChevronRight, AlertTriangle, CheckCircle, FileText, Package, User, Calendar, TrendingUp, ChevronDown, Check, Sparkles, Activity, BookOpen, BarChart2, Zap } from 'lucide-react'
+import { Shield, Filter, LayoutGrid, List, Clock, Eye, X, ChevronRight, AlertTriangle, CheckCircle, FileText, Package, User, Calendar, TrendingUp, ChevronDown, Check, Sparkles, Activity, BookOpen, BarChart2, Zap, Plus } from 'lucide-react'
 import { truthPlanes, planeGovernance, planeSourceHealth } from '../../../data/mock'
-import { Badge, SearchBar, ThreeDot, SlideOut, TabBar, AllFiltersPanel, FilterSection } from '../../ui/index'
+import { Badge, SearchBar, ThreeDot, SlideOut, TabBar, AllFiltersPanel, FilterSection, Modal, FormField } from '../../ui/index'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const STATUS_LABELS = {
@@ -461,10 +461,91 @@ function TruthPlaneSlideOut({ plane, onClose, onOpen, onNavigate }) {
   )
 }
 
+// ── Create Truth Plane Modal ──────────────────────────────────────────────────
+function CreateTruthPlaneModal({ onClose }) {
+  const [scope, setScope] = useState('')
+
+  const ownersByScope = {
+    Workspace:      ['Alex Rivera', 'Jordan Lee', 'Sam Torres'],
+    Department:     ['Sales', 'Engineering', 'Legal', 'Finance', 'HR'],
+    'Company-wide': ['Legal', 'Finance', 'Executive'],
+  }
+
+  return (
+    <Modal
+      title="Create Truth Plane"
+      subtitle="Define a governed space for verified facts. Sources and facts can be added after creation."
+      onClose={onClose}
+      footer={
+        <>
+          <button className="btn-secondary" onClick={onClose}>Cancel</button>
+          <button className="btn-primary">+ Create Truth Plane</button>
+        </>
+      }>
+
+      <FormField label="Plane Name" required>
+        <input
+          className="input-base"
+          placeholder="e.g. Pricing Policy, Compliance Standards, Contract Terms"
+        />
+      </FormField>
+
+      <FormField label="Description">
+        <textarea
+          className="input-base resize-none h-20"
+          placeholder="Describe what facts this plane will govern"
+        />
+      </FormField>
+
+      <div className="grid grid-cols-2 gap-3">
+        <FormField label="Domain / Category" required>
+          <select className="input-base">
+            <option value="">Select domain</option>
+            <option>Compliance</option>
+            <option>Finance</option>
+            <option>Eligibility</option>
+            <option>Contracts</option>
+            <option>Operations</option>
+          </select>
+        </FormField>
+        <FormField label="Risk Level" required>
+          <select className="input-base">
+            <option value="">Select risk level</option>
+            <option>Low</option>
+            <option>Medium</option>
+            <option>High</option>
+          </select>
+        </FormField>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <FormField label="Scope" required>
+          <select className="input-base" value={scope} onChange={e => setScope(e.target.value)}>
+            <option value="">Select scope</option>
+            <option>Workspace</option>
+            <option>Department</option>
+            <option>Company-wide</option>
+          </select>
+        </FormField>
+        <FormField label="Owner" required>
+          <select className="input-base" disabled={!scope}>
+            <option value="">{scope ? 'Select owner' : 'Select scope first'}</option>
+            {(ownersByScope[scope] || []).map(o => (
+              <option key={o}>{o}</option>
+            ))}
+          </select>
+        </FormField>
+      </div>
+
+    </Modal>
+  )
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 export default function TruthPlane() {
   const navigate = useNavigate()
   const [selected, setSelected]           = useState(null)
+  const [showCreate, setShowCreate]       = useState(false)
   const [showFilters, setShowFilters]     = useState(false)
   const [search, setSearch]               = useState('')
   const [activeFilters, setActiveFilters] = useState(EMPTY_FILTERS)
@@ -547,6 +628,9 @@ export default function TruthPlane() {
               <p className="text-xs text-text-muted">{truthPlanes.length} planes</p>
             </div>
           </div>
+          <button className="btn-primary" onClick={() => setShowCreate(true)}>
+            <Plus size={14} /> New Truth Plane
+          </button>
         </div>
 
         {/* Search + filter bar */}
@@ -704,6 +788,9 @@ export default function TruthPlane() {
           onOpen={() => navigate(`/truth-plane/${selected.id}`)}
           onNavigate={() => navigate(`/truth-plane/${selected.id}`)} />
       )}
+
+      {/* Create Truth Plane modal */}
+      {showCreate && <CreateTruthPlaneModal onClose={() => setShowCreate(false)} />}
 
       {/* All Filters panel */}
       {showFilters && (

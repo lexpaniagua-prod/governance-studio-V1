@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { createPortal } from 'react-dom'
 import {
   X, Sparkles, CheckCircle, AlertTriangle, FileText, FileSearch,
-  ChevronRight, Calendar, Lock, TrendingUp, Zap, Users, Send,
+  ChevronRight, Calendar, Lock, TrendingUp, Zap, Users, Send, Plus, Upload,
 } from 'lucide-react'
 
 // ── Shared data ───────────────────────────────────────────────────────────────
@@ -241,6 +241,10 @@ export default function ProposeChangeModal({ fact, onClose, onSubmit }) {
                           )
                         })}
                       </div>
+                      <button className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs text-text-muted transition-all hover:text-text-secondary hover:border-white/20"
+                        style={{ border: '1px dashed rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.01)' }}>
+                        <Upload size={11} /> Upload a document
+                      </button>
                     </div>
                   )}
 

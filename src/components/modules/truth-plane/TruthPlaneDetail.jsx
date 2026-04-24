@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
-import { Shield, Settings, ChevronRight, Filter, AlertTriangle, ExternalLink, Sparkles, Building2, Calendar, DollarSign, MapPin, User, Hash, Clock, Eye, CheckCircle, FileSearch, ArrowUpCircle, MessageSquare, Package, PenLine, XCircle, X, Layers, FileText, Award, SendHorizonal, Zap, TrendingUp, Activity, Database, RefreshCw, Lock, Users } from 'lucide-react'
+import { Shield, Settings, ChevronRight, Filter, AlertTriangle, ExternalLink, Sparkles, Building2, Calendar, DollarSign, MapPin, User, Hash, Clock, Eye, CheckCircle, FileSearch, ArrowUpCircle, MessageSquare, Package, PenLine, XCircle, X, Layers, FileText, Award, SendHorizonal, Zap, TrendingUp, Activity, Database, RefreshCw, Lock, Users, Upload } from 'lucide-react'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import { truthPlanes, truthFacts, factGovernance, factProposals, breakGlassRecords, reviewQueue as seedReviewQueue } from '../../../data/mock'
 import { Badge, Chip, ThreeDot, SearchBar, SlideOut, TabBar, AllFiltersPanel, FilterSection, MetricCard } from '../../ui/index'
@@ -1479,6 +1479,10 @@ function EditProposalModal({ proposal, onClose, onSave }) {
                         )
                       })}
                     </div>
+                    <button className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs text-text-muted transition-all hover:text-text-secondary hover:border-white/20"
+                      style={{ border: '1px dashed rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.01)' }}>
+                      <Upload size={11} /> Upload a document
+                    </button>
                   </div>
                 )}
 
@@ -2353,8 +2357,8 @@ export default function TruthPlaneDetail() {
                             {/* Confidence + Risk + Polarity — right-aligned */}
                             <div className="ml-auto flex items-center gap-1.5">
                               <span className="text-[10px] text-text-muted">{fact.polarity === '+' ? '+' : '−'}</span>
-                              <Chip color={riskColor}>{fact.confidence}%</Chip>
-                              <Chip color={riskColor}>{fact.risk}</Chip>
+                              <Chip color={riskColor} tooltip="Confidence Score — AI-assessed likelihood this fact is accurate and well-supported by evidence">{fact.confidence}%</Chip>
+                              <Chip color={riskColor} tooltip="Information Risk Level — Potential impact if this fact is incorrect or disputed">{fact.risk}</Chip>
                             </div>
                           </div>
 
@@ -2839,8 +2843,8 @@ export default function TruthPlaneDetail() {
                             )
                           })()}
                           <div className="ml-auto flex items-center gap-2">
-                            <Chip color={item.risk === 'Low' ? 'green' : item.risk === 'Medium' ? 'amber' : 'red'}>{item.confidence}%</Chip>
-                            <Chip color={item.risk === 'Low' ? 'green' : item.risk === 'Medium' ? 'amber' : 'red'}>{item.risk}</Chip>
+                            <Chip color={item.risk === 'Low' ? 'green' : item.risk === 'Medium' ? 'amber' : 'red'} tooltip="Confidence Score — AI-assessed likelihood this claim is accurate and well-supported by evidence">{item.confidence}%</Chip>
+                            <Chip color={item.risk === 'Low' ? 'green' : item.risk === 'Medium' ? 'amber' : 'red'} tooltip="Information Risk Level — Potential impact if this claim is incorrect or disputed">{item.risk}</Chip>
                           </div>
                         </div>
 

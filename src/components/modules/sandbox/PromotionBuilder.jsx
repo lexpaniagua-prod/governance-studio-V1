@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { Sparkles, Wand2, Save, ChevronRight, CheckCircle, AlertTriangle, FileText, Shield, Tag, Calendar, Clock, Pencil, X, Eye } from 'lucide-react'
 import { claims, sandboxes } from '../../../data/mock'
@@ -86,9 +87,10 @@ function Step1({ selected, onToggle }) {
         {claims.map(claim => {
           const isSelected = selected.includes(claim.id)
           return (
-            <label key={claim.id}
+            <div key={claim.id}
               className={clsx('row-item flex items-start gap-3 cursor-pointer', isSelected && 'selected', claim.status === 'conflict' && 'conflict')}
               onClick={() => onToggle(claim.id)}>
+              {/* Checkbox */}
               <div className="mt-1 shrink-0">
                 <div className={clsx(
                   'w-4 h-4 rounded border flex items-center justify-center transition-all',
@@ -105,6 +107,7 @@ function Step1({ selected, onToggle }) {
                   <span className="text-[10px] font-mono text-text-muted">{claim.id}</span>
                   <p className="text-sm font-medium text-text-primary">{claim.title}</p>
                   <Badge variant={claim.status}>{claim.status === 'promotable' ? 'Promotable' : claim.status === 'promoted' ? 'Promoted' : 'Conflict'}</Badge>
+                  {/* Eye: preview only — stops propagation so card click (select) is not triggered */}
                   <button className="btn-ghost p-1 ml-auto rounded-lg" title="Preview claim"
                     onClick={e => { e.stopPropagation(); setPreviewClaim(claim) }}>
                     <Eye size={13} />
@@ -115,11 +118,11 @@ function Step1({ selected, onToggle }) {
                   <span>📄 {claim.doc}</span>
                   <span>§ {claim.section}</span>
                   <span>🕐 {claim.time}</span>
-                  <Chip color={claim.risk === 'Low' ? 'green' : claim.risk === 'Medium' ? 'amber' : 'red'}>{claim.confidence}% Conf.</Chip>
-                  <Chip color={claim.risk === 'Low' ? 'green' : claim.risk === 'Medium' ? 'amber' : 'red'}>{claim.risk}</Chip>
+                  <Chip color={claim.risk === 'Low' ? 'green' : claim.risk === 'Medium' ? 'amber' : 'red'} tooltip="Confidence Score — AI-assessed likelihood this claim is accurate and well-supported by evidence">{claim.confidence}% Conf.</Chip>
+                  <Chip color={claim.risk === 'Low' ? 'green' : claim.risk === 'Medium' ? 'amber' : 'red'} tooltip="Information Risk Level — Potential impact if this claim is incorrect or disputed">{claim.risk}</Chip>
                 </div>
               </div>
-            </label>
+            </div>
           )
         })}
       </div>
@@ -140,7 +143,7 @@ function Step1({ selected, onToggle }) {
 }
 
 // ── Step 2: Target & Details ──────────────────────────────────────────────────
-function Step2({ pkg }) {
+function Step2({ pkg, packageName, onPackageNameChange, targetPlane, onTargetPlaneChange }) {
   const [configMode, setConfigMode] = useState('Apply to all claims')
   const [tags, setTags] = useState(pkg?.tags ?? [])
   const [tagInput, setTagInput] = useState('')
@@ -157,11 +160,12 @@ function Step2({ pkg }) {
         <p className="text-sm font-semibold text-text-primary">Package Details</p>
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-text-secondary">Package Name <span className="text-red-400">*</span></label>
-          <input className="input-base" placeholder="Enter package name" defaultValue={pkg?.name ?? ''} />
+          <input className="input-base" placeholder="Enter package name"
+            value={packageName} onChange={e => onPackageNameChange(e.target.value)} />
         </div>
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-text-secondary">Target Truth Plane <span className="text-red-400">*</span></label>
-          <select className="input-base" defaultValue={pkg?.target ?? ''}>
+          <select className="input-base" value={targetPlane} onChange={e => onTargetPlaneChange(e.target.value)}>
             <option value="">Select target plane</option>
             <option>Financial Truth Plane</option>
             <option>Technical Truth Plane</option>
@@ -207,33 +211,50 @@ function Step2({ pkg }) {
             </button>
           ))}
         </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-text-secondary">Valid From</label>
-            <input type="date" className="input-base" defaultValue="2024-01-01" />
+
+        {configMode === 'Configure per claim' ? (
+          <div className="flex items-start gap-3 px-4 py-3.5 rounded-xl"
+            style={{ background: 'rgba(124,92,252,0.07)', border: '1px solid rgba(124,92,252,0.25)' }}>
+            <div className="p-1.5 rounded-lg shrink-0 mt-0.5" style={{ background: 'rgba(124,92,252,0.15)' }}>
+              <Wand2 size={13} style={{ color: '#a78bfa' }} />
+            </div>
+            <div>
+              <p className="text-xs font-semibold mb-1" style={{ color: '#c4b5fd' }}>Per-claim configuration enabled</p>
+              <p className="text-[11px] leading-relaxed" style={{ color: '#94a3b8' }}>
+                Validity dates and review period will be set individually for each claim in <span className="font-semibold text-text-secondary">Step 3 — Claim Review</span>. You can still apply a global default there or override per claim.
+              </p>
+            </div>
           </div>
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-text-secondary">Valid To</label>
-            <input type="date" className="input-base" defaultValue="2024-12-31" />
-          </div>
-        </div>
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-text-secondary">Review Period (days)</label>
-          <input type="number" className="input-base" defaultValue="90" />
-        </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-text-secondary">Valid From</label>
+                <input type="date" className="input-base" defaultValue="2024-01-01" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-text-secondary">Valid To</label>
+                <input type="date" className="input-base" defaultValue="2024-12-31" />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-text-secondary">Review Period (days)</label>
+              <input type="number" className="input-base" defaultValue="90" />
+            </div>
+          </>
+        )}
       </div>
     </div>
   )
 }
 
 // ── Step 3: Review & Send ─────────────────────────────────────────────────────
-function Step3({ selected }) {
+function Step3({ selected, reviewed, onReviewedChange }) {
   const [activeClaim, setActiveClaim] = useState(selected[0] || null)
   const [detailTab, setDetailTab] = useState('Details')
-  const [reviewed, setReviewed] = useState(new Set())
   const selectedClaims = claims.filter(c => selected.includes(c.id))
 
-  const toggleReview = (id) => setReviewed(prev => {
+  const toggleReview = (id) => onReviewedChange(prev => {
     const next = new Set(prev)
     next.has(id) ? next.delete(id) : next.add(id)
     return next
@@ -391,8 +412,16 @@ function Step3({ selected }) {
                         <select className="input-base text-xs py-1.5"><option>Performance</option><option>Compliance</option><option>Financial</option></select>
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-[10px] text-text-muted">Review Period</label>
-                        <input className="input-base text-xs py-1.5" defaultValue="90 days" />
+                        <label className="text-[10px] text-text-muted">Review Period (days)</label>
+                        <input type="number" className="input-base text-xs py-1.5" defaultValue="90" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] text-text-muted">Valid From</label>
+                        <input type="date" className="input-base text-xs py-1.5" defaultValue="2024-01-01" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] text-text-muted">Valid To</label>
+                        <input type="date" className="input-base text-xs py-1.5" defaultValue="2024-12-31" />
                       </div>
                     </div>
                     <div className="px-3 py-2 rounded-lg text-xs flex items-start gap-2"
@@ -550,21 +579,147 @@ function Step4({ selected }) {
   )
 }
 
+// ── Submit Confirmation Modal ─────────────────────────────────────────────────
+function SubmitConfirmModal({ issues, packageName, targetPlane, claimCount, reviewedCount, onClose, onSaveDraft, onConfirm, onKeepEditing }) {
+  const allGood = issues.length === 0
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="w-full max-w-md rounded-2xl shadow-2xl overflow-hidden"
+        style={{ background: '#131825', border: '1px solid rgba(255,255,255,0.1)' }}>
+
+        {/* Top accent bar */}
+        <div className="h-1 w-full" style={{
+          background: allGood
+            ? 'linear-gradient(90deg,#7c5cfc,#22c55e)'
+            : 'linear-gradient(90deg,#f59e0b,#f87171)',
+        }} />
+
+        {/* Header */}
+        <div className="px-6 pt-5 pb-4 flex items-start gap-4"
+          style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+          <div className="p-2.5 rounded-xl shrink-0" style={{
+            background: allGood ? 'rgba(34,197,94,0.12)' : 'rgba(245,158,11,0.12)',
+          }}>
+            {allGood
+              ? <CheckCircle size={22} style={{ color: '#4ade80' }} />
+              : <AlertTriangle size={22} style={{ color: '#fbbf24' }} />
+            }
+          </div>
+          <div>
+            <p className="text-base font-semibold text-text-primary">
+              {allGood ? 'Ready to Submit' : 'Almost there'}
+            </p>
+            <p className="text-xs text-text-muted mt-0.5">
+              {allGood
+                ? 'Your promotion package is complete and ready to send to the Truth Plane.'
+                : 'A few things need attention before this package can be submitted.'}
+            </p>
+          </div>
+          <button onClick={onClose} className="btn-ghost p-1.5 ml-auto shrink-0">
+            <X size={14} />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="px-6 py-4 space-y-3">
+          {allGood ? (
+            /* ── All good: summary of what's confirmed ── */
+            <div className="space-y-2">
+              {[
+                { label: 'Package name',    value: packageName,                                    ok: true },
+                { label: 'Target plane',    value: targetPlane,                                    ok: true },
+                { label: 'Claims selected', value: `${claimCount} claim${claimCount !== 1 ? 's' : ''}`, ok: true },
+                { label: 'Claims reviewed', value: `${reviewedCount} / ${claimCount} reviewed`,    ok: true },
+              ].map(({ label, value, ok }) => (
+                <div key={label} className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
+                  style={{ background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.18)' }}>
+                  <CheckCircle size={13} style={{ color: '#4ade80', flexShrink: 0 }} />
+                  <span className="text-xs text-text-muted flex-1">{label}</span>
+                  <span className="text-xs font-medium text-text-secondary">{value}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            /* ── Issues: list what's missing ── */
+            <div className="space-y-2">
+              <p className="text-[11px] text-text-muted uppercase tracking-wider font-medium">What needs fixing</p>
+              {issues.map((issue, i) => (
+                <div key={i} className="flex items-start gap-3 px-3 py-2.5 rounded-xl"
+                  style={{ background: 'rgba(245,158,11,0.07)', border: '1px solid rgba(245,158,11,0.22)' }}>
+                  <AlertTriangle size={13} style={{ color: '#fbbf24', flexShrink: 0, marginTop: 1 }} />
+                  <span className="text-xs text-text-secondary leading-relaxed">{issue}</span>
+                </div>
+              ))}
+              <div className="px-3 py-2.5 rounded-xl mt-1"
+                style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <p className="text-[11px] text-text-muted leading-relaxed">
+                  You can save this package as a draft and come back to complete it later.
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-4 flex items-center justify-end gap-2.5"
+          style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+          {allGood ? (
+            <>
+              <button className="btn-secondary text-xs" onClick={onSaveDraft}>
+                <Save size={12} /> Save as Draft
+              </button>
+              <button className="btn-primary text-xs gap-1.5" onClick={onConfirm}
+                style={{ background: 'linear-gradient(135deg,#7c5cfc,#22c55e)' }}>
+                <Sparkles size={12} /> Confirm & Submit
+              </button>
+            </>
+          ) : (
+            <>
+              <button className="btn-secondary text-xs" onClick={onSaveDraft}>
+                <Save size={12} /> Save Draft
+              </button>
+              <button className="btn-primary text-xs gap-1.5" onClick={onKeepEditing}
+                style={{ background: 'rgba(96,165,250,0.15)', color: '#60a5fa', border: '1px solid rgba(96,165,250,0.3)' }}>
+                ← Keep Editing
+              </button>
+            </>
+          )}
+        </div>
+
+      </div>
+    </div>,
+    document.body
+  )
+}
+
 // ── Main Builder ──────────────────────────────────────────────────────────────
 export default function PromotionBuilder() {
   const navigate = useNavigate()
   const { id } = useParams()
   const location = useLocation()
   const editPkg = location.state?.editPkg ?? null
-  const [step, setStep] = useState(0)
-  const [selected, setSelected] = useState(location.state?.initialClaims ?? [])
+  const [step, setStep]                   = useState(0)
+  const [selected, setSelected]           = useState(location.state?.initialClaims ?? [])
+  const [reviewed, setReviewed]           = useState(new Set())
+  const [packageName, setPackageName]     = useState(editPkg?.name ?? '')
+  const [targetPlane, setTargetPlane]     = useState(editPkg?.target ?? '')
+  const [showSubmitModal, setShowSubmitModal] = useState(false)
 
   const sandbox = sandboxes.find(s => s.id === id)
   const back = () => navigate(`/sandbox/${id}`)
 
-  const toggleClaim = (id) => {
-    setSelected(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
+  const toggleClaim = (claimId) => {
+    setSelected(prev => prev.includes(claimId) ? prev.filter(x => x !== claimId) : [...prev, claimId])
   }
+
+  // Compute submission issues
+  const unreviewedCount = selected.filter(claimId => !reviewed.has(claimId)).length
+  const submitIssues = [
+    !packageName.trim()  && 'Package name is required (Step 2 — Target & Details)',
+    !targetPlane         && 'Target Truth Plane must be selected (Step 2 — Target & Details)',
+    selected.length === 0 && 'No claims have been selected for promotion (Step 1 — Promotion)',
+    unreviewedCount > 0  && `${unreviewedCount} claim${unreviewedCount > 1 ? 's' : ''} not yet marked as Reviewed (Step 3 — Claim Review)`,
+  ].filter(Boolean)
 
   return (
     <div className="flex flex-col h-full">
@@ -602,7 +757,7 @@ export default function PromotionBuilder() {
         </div>
 
         <div className="ml-6">
-          <StepIndicator current={step} onStepClick={editPkg ? setStep : undefined} />
+          <StepIndicator current={step} onStepClick={setStep} />
         </div>
 
         <div className="flex items-center gap-2 ml-auto">
@@ -612,12 +767,22 @@ export default function PromotionBuilder() {
         </div>
       </div>
 
-      {/* Content */}
+      {/* Content — all steps stay mounted so state and uncontrolled inputs are preserved */}
       <div className="flex-1 overflow-y-auto p-6">
-        {step === 0 && <Step1 selected={selected} onToggle={toggleClaim} />}
-        {step === 1 && <Step2 pkg={editPkg} />}
-        {step === 2 && <Step3 selected={selected} />}
-        {step === 3 && <Step4 selected={selected} />}
+        <div style={{ display: step === 0 ? 'block' : 'none' }}>
+          <Step1 selected={selected} onToggle={toggleClaim} />
+        </div>
+        <div style={{ display: step === 1 ? 'block' : 'none' }}>
+          <Step2 pkg={editPkg}
+            packageName={packageName} onPackageNameChange={setPackageName}
+            targetPlane={targetPlane} onTargetPlaneChange={setTargetPlane} />
+        </div>
+        <div style={{ display: step === 2 ? 'block' : 'none' }}>
+          <Step3 selected={selected} reviewed={reviewed} onReviewedChange={setReviewed} />
+        </div>
+        <div style={{ display: step === 3 ? 'block' : 'none' }}>
+          <Step4 selected={selected} />
+        </div>
       </div>
 
       {/* Footer nav */}
@@ -631,11 +796,28 @@ export default function PromotionBuilder() {
             Next →
           </button>
         ) : (
-          <button className="btn-primary gap-1.5" style={{ background: 'linear-gradient(135deg, #7c5cfc, #22c55e)' }}>
+          <button className="btn-primary gap-1.5"
+            style={{ background: 'linear-gradient(135deg, #7c5cfc, #22c55e)' }}
+            onClick={() => setShowSubmitModal(true)}>
             <Sparkles size={13} /> {editPkg ? 'Save Changes' : 'Submit Promotion'}
           </button>
         )}
       </div>
+
+      {/* Submit confirmation modal */}
+      {showSubmitModal && (
+        <SubmitConfirmModal
+          issues={submitIssues}
+          packageName={packageName || '(untitled)'}
+          targetPlane={targetPlane || '(none selected)'}
+          claimCount={selected.length}
+          reviewedCount={reviewed.size}
+          onClose={() => setShowSubmitModal(false)}
+          onSaveDraft={() => setShowSubmitModal(false)}
+          onConfirm={() => { setShowSubmitModal(false); back() }}
+          onKeepEditing={() => setShowSubmitModal(false)}
+        />
+      )}
     </div>
   )
 }
