@@ -118,8 +118,8 @@ function Step1({ selected, onToggle }) {
                   <span>📄 {claim.doc}</span>
                   <span>§ {claim.section}</span>
                   <span>🕐 {claim.time}</span>
-                  <Chip color={claim.risk === 'Low' ? 'green' : claim.risk === 'Medium' ? 'amber' : 'red'} tooltip="Confidence Score — AI-assessed likelihood this claim is accurate and well-supported by evidence">{claim.confidence}% Conf.</Chip>
-                  <Chip color={claim.risk === 'Low' ? 'green' : claim.risk === 'Medium' ? 'amber' : 'red'} tooltip="Information Risk Level — Potential impact if this claim is incorrect or disputed">{claim.risk}</Chip>
+                  <Chip color={claim.risk === 'Low' ? 'green' : claim.risk === 'Medium' ? 'amber' : 'red'} tooltip="AI Confidence Score">{claim.confidence}% Conf.</Chip>
+                  <Chip color={claim.risk === 'Low' ? 'green' : claim.risk === 'Medium' ? 'amber' : 'red'} tooltip="Information Risk Level">{claim.risk}</Chip>
                 </div>
               </div>
             </div>

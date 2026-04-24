@@ -2357,8 +2357,8 @@ export default function TruthPlaneDetail() {
                             {/* Confidence + Risk + Polarity — right-aligned */}
                             <div className="ml-auto flex items-center gap-1.5">
                               <span className="text-[10px] text-text-muted">{fact.polarity === '+' ? '+' : '−'}</span>
-                              <Chip color={riskColor} tooltip="Confidence Score — AI-assessed likelihood this fact is accurate and well-supported by evidence">{fact.confidence}%</Chip>
-                              <Chip color={riskColor} tooltip="Information Risk Level — Potential impact if this fact is incorrect or disputed">{fact.risk}</Chip>
+                              <Chip color={riskColor} tooltip="AI Confidence Score">{fact.confidence}%</Chip>
+                              <Chip color={riskColor} tooltip="Information Risk Level">{fact.risk}</Chip>
                             </div>
                           </div>
 
@@ -2843,8 +2843,8 @@ export default function TruthPlaneDetail() {
                             )
                           })()}
                           <div className="ml-auto flex items-center gap-2">
-                            <Chip color={item.risk === 'Low' ? 'green' : item.risk === 'Medium' ? 'amber' : 'red'} tooltip="Confidence Score — AI-assessed likelihood this claim is accurate and well-supported by evidence">{item.confidence}%</Chip>
-                            <Chip color={item.risk === 'Low' ? 'green' : item.risk === 'Medium' ? 'amber' : 'red'} tooltip="Information Risk Level — Potential impact if this claim is incorrect or disputed">{item.risk}</Chip>
+                            <Chip color={item.risk === 'Low' ? 'green' : item.risk === 'Medium' ? 'amber' : 'red'} tooltip="AI Confidence Score">{item.confidence}%</Chip>
+                            <Chip color={item.risk === 'Low' ? 'green' : item.risk === 'Medium' ? 'amber' : 'red'} tooltip="Information Risk Level">{item.risk}</Chip>
                           </div>
                         </div>
 

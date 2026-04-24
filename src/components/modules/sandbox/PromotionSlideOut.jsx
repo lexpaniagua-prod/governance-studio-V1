@@ -94,6 +94,14 @@ function OverviewTab({ pkg }) {
 }
 
 // ── Claims Tab ────────────────────────────────────────────────────────────────
+const CLAIM_STATUS = {
+  promoted:  { variant: 'promoted',  label: 'Promoted'   },
+  'in-review':{ variant: 'in-review', label: 'In Review'  },
+  rejected:  { variant: 'rejected',  label: 'Rejected'   },
+  'in-truth':{ variant: 'in-truth',  label: 'In Truth'   },
+  queue:     { variant: 'queue',     label: 'Queue'       },
+}
+
 function ClaimsTab() {
   const polarityColor = p => p === '+' ? '#4ade80' : p === '−' ? '#f87171' : '#94a3b8'
   const riskColor = r => ({ Low: '#4ade80', Medium: '#fbbf24', High: '#f87171' }[r] || '#94a3b8')
@@ -112,8 +120,8 @@ function ClaimsTab() {
               <div className="flex items-center gap-2 flex-wrap mb-1">
                 <span className="text-[10px] font-mono text-text-muted">{c.id}</span>
                 <p className="text-xs font-semibold text-text-primary">{c.title}</p>
-                <Badge variant={c.status === 'promoted' ? 'promoted' : 'promotable'}>
-                  {c.status === 'promoted' ? 'Promoted' : 'Promotable'}
+                <Badge variant={CLAIM_STATUS[c.status]?.variant ?? 'gray'}>
+                  {CLAIM_STATUS[c.status]?.label ?? c.status}
                 </Badge>
               </div>
 

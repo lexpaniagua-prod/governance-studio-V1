@@ -216,7 +216,7 @@ export default function TruthFactDetail() {
                       style={{ background: 'rgba(124,92,252,0.1)', color: '#a78bfa', border: '1px solid rgba(124,92,252,0.2)' }}>
                       {c.bundle}
                     </span>
-                    <Chip color={c.risk === 'Low' ? 'green' : c.risk === 'Medium' ? 'amber' : 'red'} tooltip="Information Risk Level — Potential impact if this claim is incorrect or disputed">{c.risk}</Chip>
+                    <Chip color={c.risk === 'Low' ? 'green' : c.risk === 'Medium' ? 'amber' : 'red'} tooltip="Information Risk Level">{c.risk}</Chip>
                     <span className="text-xs font-semibold ml-auto" style={{ color: c.polarity === '+' ? '#4ade80' : '#f87171' }}>
                       {c.polarity === '+' ? '+ Positive' : '− Negative'}
                     </span>

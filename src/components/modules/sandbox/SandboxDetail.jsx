@@ -1028,8 +1028,8 @@ function ClaimsTab({ onOpenBuilder }) {
                   <span>📁 {claim.subsection}</span>
                   <span>🕐 {claim.time}</span>
                   <div className="ml-auto flex items-center gap-1.5">
-                    <Chip color={riskColor[claim.risk] || 'gray'} tooltip="Confidence Score — AI-assessed likelihood this claim is accurate and well-supported by evidence">{claim.confidence}%</Chip>
-                    <Chip color={riskColor[claim.risk] || 'gray'} tooltip="Information Risk Level — Potential impact if this claim is incorrect or disputed">{claim.risk}</Chip>
+                    <Chip color={riskColor[claim.risk] || 'gray'} tooltip="AI Confidence Score">{claim.confidence}%</Chip>
+                    <Chip color={riskColor[claim.risk] || 'gray'} tooltip="Information Risk Level">{claim.risk}</Chip>
                     <span className="text-text-muted">× {claim.bundles}</span>
                   </div>
                 </div>

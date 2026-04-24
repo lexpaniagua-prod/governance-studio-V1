@@ -12,7 +12,10 @@ export function Badge({ variant = 'gray', children, className }) {
     ingestion: 'badge-ingestion', 'no-ingestion': 'badge-no-ingestion',
     'not-promotable': 'badge bg-slate-800/50 text-slate-500 border border-slate-700/50',
     'in-progress': 'badge bg-blue-500/15 text-blue-400 border border-blue-500/30',
-    queue: 'badge bg-amber-500/12 text-amber-400 border border-amber-500/25',
+    queue:      'badge bg-amber-500/12 text-amber-400 border border-amber-500/25',
+    'in-review':'badge bg-blue-500/15 text-blue-400 border border-blue-500/30',
+    rejected:   'badge bg-red-500/12 text-red-400 border border-red-500/25',
+    'in-truth': 'badge bg-teal-500/12 text-teal-400 border border-teal-500/25',
   }
   return <span className={clsx('badge', map[variant] || 'badge', className)}>{children}</span>
 }
@@ -38,10 +41,13 @@ export function Chip({ color = 'gray', children, tooltip }) {
           border: '1px solid rgba(255,255,255,0.12)',
           color: '#cbd5e1',
           fontSize: '11px',
-          lineHeight: '1.5',
-          padding: '6px 10px',
-          borderRadius: '8px',
+          lineHeight: '1.4',
+          padding: '5px 9px',
+          borderRadius: '7px',
           whiteSpace: 'nowrap',
+          maxWidth: '160px',
+          whiteSpace: 'normal',
+          textAlign: 'center',
           zIndex: 9999,
           pointerEvents: 'none',
           boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
