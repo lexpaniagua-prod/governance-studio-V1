@@ -69,7 +69,7 @@ export default function SourceDrives() {
                       {drive.status === 'active' ? 'Active Ingestion' : 'No Ingestion'}
                     </Badge>
                     <div className="ml-auto flex items-center gap-0.5">
-                      <button className="btn-ghost p-1.5" onClick={e => { e.stopPropagation(); setSelected(drive) }}>
+                      <button className="btn-ghost p-1.5 rounded-lg" title="Preview" onClick={e => { e.stopPropagation(); setSelected(drive) }}>
                         <Eye size={14} />
                       </button>
                       <ThreeDot items={[

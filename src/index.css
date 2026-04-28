@@ -24,8 +24,8 @@
 
   /* Text */
   --text-primary:   #f1f5f9;
-  --text-secondary: #94a3b8;
-  --text-muted:     #475569;
+  --text-secondary: #b8c5d6;
+  --text-muted:     #8b9ab0;
 
   /* Semantic dim backgrounds */
   --state-purple-dim: rgba(124,92,252,0.15);

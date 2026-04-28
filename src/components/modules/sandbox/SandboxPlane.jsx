@@ -180,7 +180,7 @@ export default function SandboxPlane() {
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="text-sm font-semibold text-text-primary">{sandbox.name}</p>
                     <div className="ml-auto flex items-center gap-0.5">
-                      <button className="btn-ghost p-1.5" onClick={e => { e.stopPropagation(); setSelected(sandbox) }}>
+                      <button className="btn-ghost p-1.5 rounded-lg" title="Preview" onClick={e => { e.stopPropagation(); setSelected(sandbox) }}>
                         <Eye size={14} />
                       </button>
                       <ThreeDot items={[

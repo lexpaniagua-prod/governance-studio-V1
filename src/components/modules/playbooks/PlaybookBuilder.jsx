@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { truthPacks as KNOWLEDGE_PACKS } from '../../../data/mockKnowledge'
+import TruthPackSlideOut from '../knowledge/TruthPackSlideOut'
 import {
   ArrowLeft, ChevronRight, ChevronLeft, Save, CheckCircle, Check,
   FileText, Sparkles, Shield, Target, Layers, Zap, Eye,
@@ -9,7 +10,7 @@ import {
   ChevronDown, ChevronUp, AlertTriangle, Plus, Trash2,
   Clock, Activity, BarChart2, Lock, BookOpen,
   UserCheck, Users, MessageSquare, Search,
-  Flag, XCircle, PlayCircle, GitBranch, RotateCcw,
+  Flag, XCircle, PlayCircle, GitBranch, RotateCcw, Archive,
 } from 'lucide-react'
 
 // ── Tenant / Rooftop mock data ────────────────────────────────────────────────
@@ -59,6 +60,7 @@ const TENANT_ROOFTOPS = [
 // ── Steps definition ──────────────────────────────────────────────────────────
 const STEPS = [
   { id: 'basics',    label: 'Basics',     icon: FileText  },
+  { id: 'knowledge', label: 'Knowledge',  icon: BookOpen  },
   { id: 'moment',    label: 'Moment',     icon: Sparkles  },
   { id: 'gates',     label: 'Hard Gates', icon: Shield    },
   { id: 'objective', label: 'Objective',  icon: Target    },
@@ -69,13 +71,14 @@ const STEPS = [
 
 // ── Step meta (header shown at top of content area) ───────────────────────────
 const STEP_META = {
-  basics:    { title: 'Basics',           desc: 'Define the identity, scope, and ownership of this playbook',                                      iconBg: 'linear-gradient(135deg,#3b82f6,#7c5cfc)' },
-  moment:    { title: 'Moment',           desc: 'Choose the primary event or customer condition that makes this playbook a candidate strategy',     iconBg: 'linear-gradient(135deg,#7c5cfc,#a78bfa)' },
-  gates:     { title: 'Hard Gates',       desc: 'Set non-negotiable eligibility checks — if any fail, the playbook will not execute',               iconBg: 'linear-gradient(135deg,#16a34a,#2dd4bf)' },
-  objective: { title: 'Objective & Success', desc: 'Define the business goal and the KPI the NBA engine should optimize toward',                   iconBg: 'linear-gradient(135deg,#f59e0b,#ef4444)' },
-  phases:    { title: 'Phases & Actions', desc: 'Structure the execution flow — each phase runs in sequence and can contain multiple actions',      iconBg: 'linear-gradient(135deg,#2563eb,#0891b2)' },
-  trust:     { title: 'Trust Controls',   desc: 'Set how much autonomy the NBA engine has and when human approval is required',                    iconBg: 'linear-gradient(135deg,#7c5cfc,#2563eb)' },
-  review:    { title: 'Review',           desc: 'Confirm all settings before saving. You can return to any step to make changes.',                  iconBg: 'linear-gradient(135deg,#64748b,#475569)' },
+  basics:    { title: 'Basics',           desc: 'Define the identity, scope, and ownership of this playbook',                                                           iconBg: 'linear-gradient(135deg,#3b82f6,#7c5cfc)' },
+  knowledge: { title: 'Knowledge',        desc: 'Select the knowledge packs that define what this playbook\'s AI actions can reference and reason from during execution', iconBg: 'linear-gradient(135deg,#7c5cfc,#a78bfa)' },
+  moment:    { title: 'Moment',           desc: 'Choose the primary event or customer condition that makes this playbook a candidate strategy',                           iconBg: 'linear-gradient(135deg,#a78bfa,#ec4899)' },
+  gates:     { title: 'Hard Gates',       desc: 'Set non-negotiable eligibility checks — if any fail, the playbook will not execute',                                    iconBg: 'linear-gradient(135deg,#16a34a,#2dd4bf)' },
+  objective: { title: 'Objective & Success', desc: 'Define the business goal and the KPI the NBA engine should optimize toward',                                         iconBg: 'linear-gradient(135deg,#f59e0b,#ef4444)' },
+  phases:    { title: 'Phases & Actions', desc: 'Structure the execution flow — each phase runs in sequence and can contain multiple actions',                            iconBg: 'linear-gradient(135deg,#2563eb,#0891b2)' },
+  trust:     { title: 'Trust Controls',   desc: 'Set how much autonomy the NBA engine has and when human approval is required',                                          iconBg: 'linear-gradient(135deg,#7c5cfc,#2563eb)' },
+  review:    { title: 'Review',           desc: 'Confirm all settings before saving. You can return to any step to make changes.',                                        iconBg: 'linear-gradient(135deg,#64748b,#475569)' },
 }
 
 // ── Initial data ──────────────────────────────────────────────────────────────
@@ -94,7 +97,7 @@ const INITIAL = {
   gate_compliance_checks: [],
   gate_custom: [],
   // Objective & Success
-  goalType: '', primarySuccessEvent: '', exitConditions: [], failureOutcome: '', nextPlaybook: '',
+  goalType: '', primarySuccessEvent: '', exitConditions: [],
   kpiAssociation: '', strategyNotes: '',
   // Phases
   phases: [],
@@ -136,6 +139,7 @@ const INITIAL = {
   ],
   humanReviewCustom: '',
   humanApprovalTimeout: '4 hours',
+  personalizationFields: ['name', 'vehicle_interest', 'assigned_bdc', 'source'],
 }
 
 // ── Sidebar field definitions per step ───────────────────────────────────────
@@ -148,7 +152,9 @@ const SIDEBAR_FIELDS = {
     { key: 'owner',       label: 'Owner',          required: true  },
     { key: 'priority',    label: 'Priority',       required: true  },
     { key: 'tags',               label: 'Tags',               required: false },
-    { key: 'knowledgePackages',  label: 'Knowledge Packages', required: false },
+  ],
+  knowledge: [
+    { key: 'knowledgePackages', label: 'Knowledge Packages', required: true },
   ],
   moment:    [
     { key: 'primaryMoment',        label: 'Primary Moment',    required: true  },
@@ -167,7 +173,6 @@ const SIDEBAR_FIELDS = {
     { key: 'goalType',            label: 'Goal Type',       required: true  },
     { key: 'primarySuccessEvent', label: 'Success Event',   required: true  },
     { key: 'exitConditions',      label: 'Exit Conditions', required: false },
-    { key: 'failureOutcome',      label: 'Failure Outcome', required: false },
     { key: 'kpiAssociation',      label: 'KPI Association', required: false },
     { key: 'strategyNotes',       label: 'Strategy Notes',  required: false },
   ],
@@ -185,6 +190,7 @@ const SIDEBAR_FIELDS = {
 
 const SIDEBAR_CALLOUTS = {
   basics:    { text: 'Name, scope and ownership define how this playbook is discovered and assigned across your org.' },
+  knowledge: { text: 'Knowledge packs define what verified facts the AI can reference during execution. At least one pack is required.' },
   moment:    { text: 'The primary moment is the signal that qualifies a customer to enter this playbook execution.' },
   gates:     { text: 'Hard gates are non-negotiable checks. If any gate fails, the playbook will not execute for that customer.' },
   objective: { text: 'The objective drives NBA decisioning. Clear success metrics allow the engine to measure and adapt.' },
@@ -542,8 +548,6 @@ function StepSidebar({ stepId, data }) {
 // ── Step: Basics ──────────────────────────────────────────────────────────────
 function BasicsStep({ data, onChange }) {
   const [tagInput, setTagInput] = useState('')
-  const [kgSearch,  setKgSearch]  = useState('')
-  const [kgOpen,    setKgOpen]    = useState(false)
   const [tenantSearch,    setTenantSearch]    = useState('')
   const [expandedTenants, setExpandedTenants] = useState({})
   const set = (key, val) => onChange({ ...data, [key]: val })
@@ -841,144 +845,6 @@ function BasicsStep({ data, onChange }) {
           </div>
         </div>
 
-        {/* ── Knowledge Packages ─────────────────────────────────────────────── */}
-        {(() => {
-          const selected  = data.knowledgePackages || []
-          const q         = kgSearch.trim().toLowerCase()
-          const available = KNOWLEDGE_PACKS.filter(p =>
-            p.status !== 'archived' &&
-            (!q || p.name.toLowerCase().includes(q) || p.department.toLowerCase().includes(q) || p.description.toLowerCase().includes(q))
-          )
-          const STATUS_DOT = { active: '#22c55e', draft: '#3b82f6', archived: '#64748b' }
-
-          return (
-            <div className="mt-1 mb-5">
-              <FieldLabel hint="Attach knowledge bases that this playbook's AI actions can reference during execution">
-                Knowledge Packages
-                <span className="ml-1" style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(Optional)</span>
-              </FieldLabel>
-
-              {/* Search input + dropdown */}
-              <div className="relative">
-                <div className="flex items-center gap-2 px-3 py-2 rounded-xl"
-                  style={{ background: 'var(--input-bg)', border: `1px solid ${kgOpen ? 'rgba(124,92,252,0.45)' : 'var(--input-border)'}`, transition: 'border-color 0.15s' }}>
-                  <Search size={12} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
-                  <input
-                    className="flex-1 bg-transparent text-xs outline-none"
-                    style={{ color: 'var(--text-secondary)' }}
-                    placeholder="Search knowledge packages…"
-                    value={kgSearch}
-                    onChange={e => { setKgSearch(e.target.value); setKgOpen(true) }}
-                    onFocus={() => setKgOpen(true)}
-                    onBlur={() => setTimeout(() => setKgOpen(false), 160)}
-                  />
-                  {kgSearch
-                    ? <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => { setKgSearch(''); setKgOpen(false) }}>
-                        <X size={11} style={{ color: 'var(--text-muted)' }} />
-                      </button>
-                    : <ChevronDown size={11} style={{ color: 'var(--text-muted)' }} />
-                  }
-                </div>
-
-                {/* Dropdown */}
-                {kgOpen && (
-                  <div className="absolute top-full left-0 right-0 mt-1 rounded-xl overflow-hidden z-50"
-                    style={{ background: 'var(--slideout-bg)', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 16px 48px rgba(0,0,0,0.55)', maxHeight: 280, overflowY: 'auto' }}>
-                    {available.length === 0 ? (
-                      <div className="px-4 py-4 text-center">
-                        <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>No packages found{q ? ` for "${kgSearch}"` : ''}</p>
-                      </div>
-                    ) : (
-                      available.map((pack, i) => {
-                        const isSelected = selected.includes(pack.id)
-                        return (
-                          <button key={pack.id} type="button"
-                            onMouseDown={e => e.preventDefault()}
-                            onClick={() => {
-                              set('knowledgePackages', isSelected ? selected.filter(x => x !== pack.id) : [...selected, pack.id])
-                              setKgSearch('')
-                              setKgOpen(false)
-                            }}
-                            className="w-full flex items-start gap-3 px-4 py-3 text-left transition-all hover:bg-white/[0.04]"
-                            style={{ borderTop: i > 0 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
-
-                            {/* Left icon */}
-                            <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
-                              style={{ background: 'rgba(124,92,252,0.12)', border: '1px solid rgba(124,92,252,0.2)' }}>
-                              <BookOpen size={12} style={{ color: '#a78bfa' }} />
-                            </div>
-
-                            {/* Info */}
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-0.5">
-                                <p className="text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>{pack.name}</p>
-                                <span className="w-1.5 h-1.5 rounded-full shrink-0"
-                                  style={{ background: STATUS_DOT[pack.status] || '#64748b' }} />
-                                {pack.isStale && (
-                                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
-                                    style={{ background: 'rgba(245,158,11,0.15)', color: '#fbbf24', border: '1px solid rgba(245,158,11,0.3)' }}>
-                                    Stale
-                                  </span>
-                                )}
-                              </div>
-                              <p className="text-[10px] leading-relaxed truncate mb-1.5" style={{ color: 'var(--text-muted)' }}>{pack.description}</p>
-                              <div className="flex items-center gap-2">
-                                <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full"
-                                  style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--text-muted)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                                  {pack.department}
-                                </span>
-                                <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
-                                  {pack.factsCount} facts
-                                </span>
-                                <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>·</span>
-                                <span className="text-[10px] font-mono" style={{ color: 'var(--text-muted)' }}>{pack.id}</span>
-                              </div>
-                            </div>
-
-                            {/* Selection indicator */}
-                            <div className="shrink-0 w-4 h-4 rounded-full border-2 flex items-center justify-center mt-1"
-                              style={{ borderColor: isSelected ? '#a78bfa' : 'rgba(255,255,255,0.2)', background: isSelected ? '#7c5cfc' : 'transparent' }}>
-                              {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-                            </div>
-                          </button>
-                        )
-                      })
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Selected chips */}
-              {selected.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-2.5">
-                  {selected.map(id => {
-                    const pack = KNOWLEDGE_PACKS.find(p => p.id === id)
-                    if (!pack) return null
-                    return (
-                      <div key={id} className="flex items-center gap-2 pl-2.5 pr-2 py-1.5 rounded-xl"
-                        style={{ background: 'rgba(124,92,252,0.08)', border: '1px solid rgba(124,92,252,0.25)' }}>
-                        <span className="w-1.5 h-1.5 rounded-full shrink-0"
-                          style={{ background: STATUS_DOT[pack.status] || '#64748b' }} />
-                        <span className="text-[11px] font-medium" style={{ color: 'var(--text-secondary)' }}>{pack.name}</span>
-                        <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full shrink-0"
-                          style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--text-muted)' }}>
-                          {pack.department}
-                        </span>
-                        <button type="button"
-                          onClick={() => set('knowledgePackages', selected.filter(x => x !== id))}
-                          className="hover:opacity-70 transition-all shrink-0"
-                          style={{ color: 'var(--text-muted)' }}>
-                          <X size={10} />
-                        </button>
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
-          )
-        })()}
-
         <div>
           <FieldLabel required hint="Determines selection order when multiple playbooks qualify">Priority / Arbitration Rank</FieldLabel>
           <div className="grid grid-cols-2 gap-2">
@@ -1047,6 +913,252 @@ function BasicsStep({ data, onChange }) {
           </div>
         </Accordion>
       </div>
+    </div>
+  )
+}
+
+// ── Step: Knowledge ──────────────────────────────────────────────────────────
+function KnowledgeStep({ data, onChange }) {
+  const [search,      setSearch]      = useState('')
+  const [filter,      setFilter]      = useState('all') // all | selected
+  const [previewPack, setPreviewPack] = useState(null)
+  const set = (key, val) => onChange({ ...data, [key]: val })
+  const selected = data.knowledgePackages || []
+
+  const STATUS_DOT   = { active: '#22c55e', draft: '#3b82f6', archived: '#64748b' }
+  const STATUS_LABEL = { active: 'Active',  draft: 'Draft',   archived: 'Archived' }
+  const USAGE_COLOR  = { high: '#4ade80', medium: '#fbbf24', low: '#94a3b8' }
+
+  const q = search.trim().toLowerCase()
+  const visible = KNOWLEDGE_PACKS.filter(p => {
+    if (p.status === 'archived') return false
+    if (filter === 'selected' && !selected.includes(p.id)) return false
+    if (q) return (
+      p.name.toLowerCase().includes(q) ||
+      p.department.toLowerCase().includes(q) ||
+      p.description.toLowerCase().includes(q) ||
+      (p.tags || []).some(t => t.toLowerCase().includes(q))
+    )
+    return true
+  })
+
+  const toggle = (id) => {
+    set('knowledgePackages', selected.includes(id) ? selected.filter(x => x !== id) : [...selected, id])
+  }
+
+  return (
+    <div className="space-y-6">
+
+      {/* Intro callout */}
+      <div className="flex items-start gap-3 p-4 rounded-xl"
+        style={{ background: 'rgba(124,92,252,0.07)', border: '1px solid rgba(124,92,252,0.2)' }}>
+        <div className="p-2 rounded-lg shrink-0" style={{ background: 'rgba(124,92,252,0.15)' }}>
+          <BookOpen size={14} style={{ color: '#a78bfa' }} />
+        </div>
+        <div>
+          <p className="text-xs font-semibold mb-1" style={{ color: '#a78bfa' }}>What are Knowledge Packs?</p>
+          <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(167,139,250,0.75)' }}>
+            Knowledge packs are curated collections of verified facts governed by your Truth Planes.
+            Selecting a pack grants this playbook's AI actions the ability to reference, reason from, and cite those facts
+            during live execution — ensuring every response is grounded in your organisation's governed data.
+          </p>
+        </div>
+      </div>
+
+      {/* Selected summary bar */}
+      {selected.length > 0 && (
+        <div className="flex items-center gap-2 flex-wrap p-3 rounded-xl"
+          style={{ background: 'rgba(74,222,128,0.06)', border: '1px solid rgba(74,222,128,0.2)' }}>
+          <CheckCircle size={12} style={{ color: '#4ade80', flexShrink: 0 }} />
+          <p className="text-xs font-semibold" style={{ color: '#4ade80' }}>
+            {selected.length} pack{selected.length > 1 ? 's' : ''} selected
+          </p>
+          <div className="flex flex-wrap gap-1.5 ml-1">
+            {selected.map(id => {
+              const pack = KNOWLEDGE_PACKS.find(p => p.id === id)
+              if (!pack) return null
+              return (
+                <span key={id} className="flex items-center gap-1.5 pl-2.5 pr-1.5 py-0.5 rounded-full text-[10px] font-medium"
+                  style={{ background: 'rgba(124,92,252,0.12)', color: 'var(--text-secondary)', border: '1px solid rgba(124,92,252,0.25)' }}>
+                  {pack.name}
+                  <button type="button" onClick={() => toggle(id)}
+                    className="opacity-50 hover:opacity-100 transition-opacity">
+                    <X size={9} />
+                  </button>
+                </span>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Search + filter row */}
+      <div className="flex items-center gap-2">
+        <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-xl"
+          style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)' }}>
+          <Search size={12} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+          <input
+            className="flex-1 bg-transparent text-xs outline-none"
+            style={{ color: 'var(--text-secondary)' }}
+            placeholder="Search by name, department, or tag…"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+          {search && (
+            <button type="button" onClick={() => setSearch('')}>
+              <X size={11} style={{ color: 'var(--text-muted)' }} />
+            </button>
+          )}
+        </div>
+        <div className="flex rounded-lg p-0.5 gap-0.5" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+          {['all', 'selected'].map(f => (
+            <button key={f} type="button" onClick={() => setFilter(f)}
+              className="px-3 py-1.5 text-xs font-medium rounded-md transition-all capitalize"
+              style={filter === f
+                ? { background: 'rgba(255,255,255,0.1)', color: '#f1f5f9' }
+                : { color: '#64748b' }}>
+              {f === 'all' ? `All (${KNOWLEDGE_PACKS.filter(p => p.status !== 'archived').length})` : `Selected (${selected.length})`}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Pack grid */}
+      {visible.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-12 rounded-xl"
+          style={{ background: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(255,255,255,0.1)' }}>
+          <BookOpen size={24} style={{ color: 'var(--text-muted)', marginBottom: 8 }} />
+          <p className="text-sm font-medium" style={{ color: 'var(--text-muted)' }}>
+            {filter === 'selected' ? 'No packs selected yet' : 'No packs match your search'}
+          </p>
+          {filter === 'selected' && (
+            <button type="button" onClick={() => setFilter('all')}
+              className="mt-2 text-xs underline" style={{ color: '#a78bfa' }}>
+              Browse all packs
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-3">
+          {visible.map(pack => {
+            const isSelected = selected.includes(pack.id)
+            return (
+              <button key={pack.id} type="button" onClick={() => toggle(pack.id)}
+                className="flex items-start gap-4 p-4 rounded-xl text-left w-full transition-all duration-150"
+                style={{
+                  background: isSelected ? 'rgba(124,92,252,0.09)' : 'rgba(255,255,255,0.02)',
+                  border: `1.5px solid ${isSelected ? 'rgba(124,92,252,0.5)' : 'rgba(255,255,255,0.07)'}`,
+                }}>
+
+                {/* Left: icon + id */}
+                <div className="shrink-0 flex flex-col items-center gap-1.5 mt-0.5">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center"
+                    style={{ background: isSelected ? 'rgba(124,92,252,0.18)' : 'rgba(255,255,255,0.05)', border: `1px solid ${isSelected ? 'rgba(124,92,252,0.35)' : 'rgba(255,255,255,0.08)'}` }}>
+                    <BookOpen size={15} style={{ color: isSelected ? '#a78bfa' : 'var(--text-muted)' }} />
+                  </div>
+                  <span className="text-[9px] font-mono" style={{ color: 'var(--text-muted)' }}>{pack.id}</span>
+                </div>
+
+                {/* Center: info */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <p className="text-sm font-semibold" style={{ color: isSelected ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
+                      {pack.name}
+                    </p>
+                    {/* Status */}
+                    <span className="flex items-center gap-1 text-[10px] font-medium">
+                      <span className="w-1.5 h-1.5 rounded-full" style={{ background: STATUS_DOT[pack.status] }} />
+                      <span style={{ color: STATUS_DOT[pack.status] }}>{STATUS_LABEL[pack.status]}</span>
+                    </span>
+                    {/* Stale */}
+                    {pack.isStale && (
+                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+                        style={{ background: 'rgba(245,158,11,0.15)', color: '#fbbf24', border: '1px solid rgba(245,158,11,0.3)' }}>
+                        ⚠ Stale
+                      </span>
+                    )}
+                  </div>
+
+                  <p className="text-[11px] leading-relaxed mb-2.5" style={{ color: 'var(--text-muted)' }}>
+                    {pack.description}
+                  </p>
+
+                  {/* Meta row */}
+                  <div className="flex items-center gap-3 flex-wrap mb-2">
+                    <span className="flex items-center gap-1 text-[10px]" style={{ color: 'var(--text-muted)' }}>
+                      <Sparkles size={10} />
+                      <span className="font-semibold" style={{ color: 'var(--text-secondary)' }}>{pack.factsCount}</span> facts
+                    </span>
+                    <span className="flex items-center gap-1 text-[10px]" style={{ color: 'var(--text-muted)' }}>
+                      <Building2 size={10} /> {pack.department}
+                    </span>
+                    <span className="flex items-center gap-1 text-[10px]" style={{ color: 'var(--text-muted)' }}>
+                      <Globe size={10} /> {pack.scope}
+                    </span>
+                    <span className="flex items-center gap-1 text-[10px]" style={{ color: 'var(--text-muted)' }}>
+                      <Activity size={10} />
+                      <span style={{ color: USAGE_COLOR[pack.usage] || '#94a3b8' }}>
+                        {pack.usage ? pack.usage.charAt(0).toUpperCase() + pack.usage.slice(1) : '—'} usage
+                      </span>
+                    </span>
+                    {pack.linkedTruthPlane && (
+                      <span className="flex items-center gap-1 text-[10px]" style={{ color: 'var(--text-muted)' }}>
+                        <Shield size={10} /> {pack.linkedTruthPlane}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Tags */}
+                  {pack.tags && pack.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {pack.tags.map(t => (
+                        <span key={t} className="text-[9px] px-1.5 py-0.5 rounded-full font-medium"
+                          style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Right: eye preview + checkbox */}
+                <div className="shrink-0 flex flex-col items-center gap-2 mt-0.5">
+                  <button
+                    type="button"
+                    onClick={e => { e.stopPropagation(); setPreviewPack(pack) }}
+                    className="btn-ghost p-1.5 rounded-lg"
+                    title="Preview pack">
+                    <Eye size={14} />
+                  </button>
+                  <div className="w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all"
+                    style={{ borderColor: isSelected ? '#7c5cfc' : 'rgba(255,255,255,0.2)', background: isSelected ? '#7c5cfc' : 'transparent' }}>
+                    {isSelected && <Check size={11} color="#fff" strokeWidth={3} />}
+                  </div>
+                </div>
+              </button>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Validation hint */}
+      {selected.length === 0 && (
+        <p className="text-[11px] text-center" style={{ color: '#f87171' }}>
+          ⚠ At least one knowledge pack is required before proceeding
+        </p>
+      )}
+
+      {/* Pack slide-out preview */}
+      {previewPack && (
+        <TruthPackSlideOut
+          pack={previewPack}
+          onClose={() => setPreviewPack(null)}
+          onEdit={() => setPreviewPack(null)}
+          onArchive={() => setPreviewPack(null)}
+          onDuplicate={() => setPreviewPack(null)}
+        />
+      )}
+
     </div>
   )
 }
@@ -1667,11 +1779,11 @@ const EXIT_CONDITIONS = [
   { id: 'negative-response', label: 'Negative Response Received',   sub: 'Event-based trigger'     },
 ]
 const FAILURE_OUTCOMES = [
-  { id: 'archive',        label: 'Archive',        sub: 'Mark complete, no action'  },
-  { id: 'escalate',       label: 'Escalate',       sub: 'Send to manager review'    },
-  { id: 'notify',         label: 'Notify',          sub: 'Alert team member'         },
-  { id: 'retry',          label: 'Retry Later',    sub: 'Re-enter queue'            },
-  { id: 'apply-playbook', label: 'Apply Playbook', sub: 'Apply a different playbook' },
+  { id: 'archive',        label: 'Archive',        sub: 'Mark complete, no action',   icon: Archive       },
+  { id: 'escalate',       label: 'Escalate',       sub: 'Send to manager review',     icon: UserCheck     },
+  { id: 'notify',         label: 'Notify',         sub: 'Alert a team member',        icon: MessageSquare },
+  { id: 'retry',          label: 'Retry Later',    sub: 'Re-enter the queue',         icon: RotateCcw     },
+  { id: 'apply-playbook', label: 'Apply Playbook', sub: 'Hand off to another playbook', icon: GitBranch   },
 ]
 const NEXT_PLAYBOOKS = [
   'Enterprise Onboarding', 'No-Show Recovery', 'Service Reminder Retention',
@@ -1681,10 +1793,23 @@ const NEXT_PLAYBOOKS = [
 // ── Step: Objective & Success ─────────────────────────────────────────────────
 function ObjectiveStep({ data, onChange }) {
   const set = (key, val) => onChange({ ...data, [key]: val })
+
   const toggleExit = (id) => {
     const arr = data.exitConditions || []
-    set('exitConditions', arr.includes(id) ? arr.filter(v => v !== id) : [...arr, id])
+    const exists = arr.some(e => e.id === id)
+    set('exitConditions', exists
+      ? arr.filter(e => e.id !== id)
+      : [...arr, { id, outcome: '', nextPlaybook: '' }]
+    )
   }
+  const setExitOutcome = (id, outcome) =>
+    set('exitConditions', (data.exitConditions || []).map(e =>
+      e.id === id ? { ...e, outcome, nextPlaybook: '' } : e
+    ))
+  const setExitPlaybook = (id, nextPlaybook) =>
+    set('exitConditions', (data.exitConditions || []).map(e =>
+      e.id === id ? { ...e, nextPlaybook } : e
+    ))
   const successEvents = SUCCESS_EVENTS_MAP[data.goalType] || []
 
   return (
@@ -1775,10 +1900,10 @@ function ObjectiveStep({ data, onChange }) {
         </div>
       )}
 
-      {/* ── Exit Conditions + Failure Outcome — unified connected block ── */}
+      {/* ── Exit Conditions — each with its own inline outcome ── */}
       <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(234,88,12,0.25)' }}>
 
-        {/* Exit Conditions header */}
+        {/* Header */}
         <div className="flex items-center gap-3 px-4 pt-4 pb-3">
           <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
             style={{ background: 'rgba(234,88,12,0.12)', border: '1px solid rgba(234,88,12,0.28)' }}>
@@ -1786,96 +1911,104 @@ function ObjectiveStep({ data, onChange }) {
           </div>
           <div>
             <p className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>Exit Conditions</p>
-            <p className="text-[10px] mt-0.5" style={{ color: 'var(--text-muted)' }}>What conditions should stop the plan without success?</p>
+            <p className="text-[10px] mt-0.5" style={{ color: 'var(--text-muted)' }}>
+              Select each condition that can stop this plan early, then define what happens for each one.
+            </p>
           </div>
         </div>
 
-        {/* Exit condition checkboxes */}
-        <div className="px-4 space-y-2 pb-3">
+        {/* Conditions list */}
+        <div className="px-4 space-y-2 pb-4">
           {EXIT_CONDITIONS.map(ec => {
-            const checked = (data.exitConditions || []).includes(ec.id)
+            const entry   = (data.exitConditions || []).find(e => e.id === ec.id)
+            const checked = !!entry
             return (
-              <button key={ec.id} type="button" onClick={() => toggleExit(ec.id)}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all"
-                style={{
-                  background: checked ? 'rgba(234,88,12,0.06)' : 'rgba(255,255,255,0.02)',
-                  border: `1px solid ${checked ? 'rgba(234,88,12,0.3)' : 'rgba(255,255,255,0.08)'}`,
-                }}>
-                <div className="w-4 h-4 rounded flex items-center justify-center shrink-0 transition-all"
-                  style={{ background: checked ? '#fb923c' : 'transparent', border: `1.5px solid ${checked ? '#fb923c' : 'rgba(255,255,255,0.25)'}` }}>
-                  {checked && <svg width="8" height="6" viewBox="0 0 8 6"><path d="M1 3l2 2 4-4" stroke="#fff" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-                </div>
-                <div>
-                  <p className="text-xs font-bold" style={{ color: checked ? 'var(--text-primary)' : 'rgba(255,255,255,0.6)' }}>{ec.label}</p>
-                  <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{ec.sub}</p>
-                </div>
-              </button>
+              <div key={ec.id} className="rounded-xl overflow-hidden transition-all"
+                style={{ border: `1.5px solid ${checked ? 'rgba(234,88,12,0.4)' : 'rgba(255,255,255,0.08)'}` }}>
+
+                {/* Condition toggle row */}
+                <button type="button" onClick={() => toggleExit(ec.id)}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 text-left transition-all"
+                  style={{ background: checked ? 'rgba(234,88,12,0.06)' : 'rgba(255,255,255,0.02)' }}>
+                  <div className="w-4 h-4 rounded flex items-center justify-center shrink-0 transition-all"
+                    style={{ background: checked ? '#fb923c' : 'transparent', border: `1.5px solid ${checked ? '#fb923c' : 'rgba(255,255,255,0.25)'}` }}>
+                    {checked && <svg width="8" height="6" viewBox="0 0 8 6"><path d="M1 3l2 2 4-4" stroke="#fff" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-xs font-semibold" style={{ color: checked ? 'var(--text-primary)' : 'rgba(255,255,255,0.55)' }}>{ec.label}</p>
+                    <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{ec.sub}</p>
+                  </div>
+                  {checked && entry.outcome && (
+                    <span className="text-[10px] font-medium px-2 py-0.5 rounded-full shrink-0"
+                      style={{ background: 'rgba(234,88,12,0.12)', color: '#fb923c', border: '1px solid rgba(234,88,12,0.25)' }}>
+                      {FAILURE_OUTCOMES.find(f => f.id === entry.outcome)?.label || entry.outcome}
+                    </span>
+                  )}
+                </button>
+
+                {/* Per-condition outcome — only when checked */}
+                {checked && (
+                  <div className="px-4 pt-3 pb-4"
+                    style={{ borderTop: '1px solid rgba(234,88,12,0.15)', background: 'rgba(0,0,0,0.12)' }}>
+                    <p className="text-[10px] font-semibold mb-2" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                      OUTCOME WHEN THIS CONDITION IS MET
+                    </p>
+                    <div className="grid grid-cols-2 gap-1.5 mb-2">
+                      {FAILURE_OUTCOMES.map(fo => {
+                        const active = entry.outcome === fo.id
+                        const Icon   = fo.icon
+                        return (
+                          <button key={fo.id} type="button"
+                            onClick={() => setExitOutcome(ec.id, fo.id)}
+                            className="flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-all"
+                            style={{
+                              background: active ? 'rgba(124,92,252,0.12)' : 'rgba(255,255,255,0.03)',
+                              border: `1.5px solid ${active ? 'rgba(124,92,252,0.5)' : 'rgba(255,255,255,0.08)'}`,
+                            }}>
+                            <Icon size={12} style={{ color: active ? '#a78bfa' : 'rgba(255,255,255,0.35)', flexShrink: 0 }} />
+                            <div>
+                              <p className="text-[11px] font-semibold leading-tight"
+                                style={{ color: active ? '#fff' : 'rgba(255,255,255,0.6)' }}>
+                                {fo.label}
+                              </p>
+                              <p className="text-[9px] leading-tight" style={{ color: 'var(--text-muted)' }}>{fo.sub}</p>
+                            </div>
+                          </button>
+                        )
+                      })}
+                    </div>
+
+                    {/* Apply Playbook selector */}
+                    {entry.outcome === 'apply-playbook' && (
+                      <div className="mt-2 p-3 rounded-xl"
+                        style={{ background: 'rgba(37,99,235,0.07)', border: '1px solid rgba(37,99,235,0.22)' }}>
+                        <p className="text-[10px] font-semibold mb-1.5" style={{ color: '#93c5fd' }}>Select Next Playbook</p>
+                        <select className="input-base w-full text-xs" value={entry.nextPlaybook || ''}
+                          onChange={e => setExitPlaybook(ec.id, e.target.value)}>
+                          <option value="">Choose a playbook…</option>
+                          {NEXT_PLAYBOOKS.map(p => <option key={p} value={p}>{p}</option>)}
+                        </select>
+                        <p className="text-[10px] mt-1.5 leading-relaxed" style={{ color: '#60a5fa' }}>
+                          When <span style={{ fontWeight: 600 }}>"{ec.label}"</span> is triggered, this playbook will be automatically applied.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             )
           })}
         </div>
 
-        {/* Info note */}
-        <div className="flex items-center gap-2 px-4 pb-4">
+        {/* Footer note */}
+        <div className="flex items-center gap-2 px-4 pb-4 -mt-2">
           <div className="w-3.5 h-3.5 rounded-full flex items-center justify-center shrink-0"
-            style={{ background: 'rgba(255,255,255,0.12)' }}>
-            <span style={{ color: 'rgba(255,255,255,0.45)', fontSize: 9, fontWeight: 700 }}>i</span>
+            style={{ background: 'rgba(255,255,255,0.1)' }}>
+            <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9, fontWeight: 700 }}>i</span>
           </div>
-          <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
-            Exit conditions stop the plan early—they are not failures, just different end states
+          <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.3)' }}>
+            Each condition can trigger a different outcome — archive, escalate, retry, or hand off to another playbook
           </p>
-        </div>
-
-        {/* Divider connecting Exit → Failure */}
-        <div className="h-px" style={{ background: 'rgba(234,88,12,0.18)' }} />
-
-        {/* Failure / Expiration Outcome */}
-        <div className="px-4 pt-4 pb-4">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-              style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.28)' }}>
-              <AlertTriangle size={14} style={{ color: '#f87171' }} />
-            </div>
-            <div>
-              <p className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>Failure / Expiration Outcome</p>
-              <p className="text-[10px] mt-0.5" style={{ color: 'var(--text-muted)' }}>What happens when a plan exits or expires?</p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2">
-            {FAILURE_OUTCOMES.map(fo => {
-              const selected = data.failureOutcome === fo.id
-              return (
-                <button key={fo.id} type="button" onClick={() => set('failureOutcome', fo.id)}
-                  className="flex flex-col gap-0.5 px-3 py-2.5 rounded-lg text-left transition-all"
-                  style={{
-                    background: selected ? 'rgba(37,99,235,0.12)' : 'rgba(255,255,255,0.025)',
-                    border: `1.5px solid ${selected ? 'rgba(37,99,235,0.5)' : 'rgba(255,255,255,0.08)'}`,
-                  }}>
-                  <p className="text-xs font-bold" style={{ color: selected ? '#fff' : 'rgba(255,255,255,0.65)' }}>{fo.label}</p>
-                  <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{fo.sub}</p>
-                </button>
-              )
-            })}
-          </div>
-
-          {/* Conditional: Select next playbook when Apply Playbook chosen */}
-          {data.failureOutcome === 'apply-playbook' && (
-            <div className="mt-3 p-3 rounded-xl" style={{ background: 'rgba(37,99,235,0.06)', border: '1px solid rgba(37,99,235,0.2)', animation: 'fadeIn 0.2s ease' }}>
-              <div className="flex items-center gap-1 mb-2">
-                <p className="text-[11px] font-semibold" style={{ color: 'var(--text-primary)' }}>Select Next Playbook</p>
-                <span style={{ color: '#ef4444', fontSize: 12, lineHeight: 1 }}>*</span>
-              </div>
-              <select className="input-base w-full text-xs" value={data.nextPlaybook || ''}
-                onChange={e => set('nextPlaybook', e.target.value)}>
-                <option value="">Choose a playbook...</option>
-                {NEXT_PLAYBOOKS.map(p => <option key={p} value={p}>{p}</option>)}
-              </select>
-              <p className="text-[10px] mt-1.5 leading-relaxed" style={{ color: '#60a5fa' }}>
-                When this playbook exits or expires, the selected playbook will be{' '}
-                <span style={{ fontWeight: 600 }}>automatically applied</span> to the customer.
-              </p>
-            </div>
-          )}
         </div>
       </div>
 
@@ -2086,18 +2219,16 @@ function PhasesStep({ data, onChange }) {
         <div className="space-y-4">
           <SectionLabel>Phases</SectionLabel>
 
-          {phases.map((phase, i) => {
-            const pt = getPhaseType(phase.icon)
-            return (
+          {phases.map((phase, i) => (
               <div key={phase.id} className="rounded-xl overflow-hidden"
                 style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)' }}>
 
                 {/* Card header — editable name */}
                 <div className="flex items-center gap-3 px-4 py-3"
                   style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.01)' }}>
-                  <div className="w-7 h-7 rounded-lg flex items-center justify-center text-base shrink-0"
-                    style={{ background: 'rgba(255,255,255,0.07)' }}>
-                    {pt.emoji}
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center text-[11px] font-bold shrink-0"
+                    style={{ background: 'rgba(124,92,252,0.15)', border: '1px solid rgba(124,92,252,0.25)', color: '#a78bfa' }}>
+                    {i + 1}
                   </div>
                   <input
                     className="flex-1 bg-transparent text-xs font-bold outline-none"
@@ -2106,10 +2237,6 @@ function PhasesStep({ data, onChange }) {
                     onChange={e => updatePhase(phase.id, { name: e.target.value })}
                     placeholder={`Phase ${i + 1} name...`}
                   />
-                  <span className="text-[9px] px-2 py-0.5 rounded-full shrink-0 font-semibold"
-                    style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--text-muted)' }}>
-                    #{i + 1}
-                  </span>
                   <button type="button" onClick={() => removePhase(phase.id)}
                     className="opacity-35 hover:opacity-80 transition-opacity shrink-0">
                     <Trash2 size={12} style={{ color: '#f87171' }} />
@@ -2119,24 +2246,6 @@ function PhasesStep({ data, onChange }) {
                 {/* Card body */}
                 <div className="px-4 py-4 space-y-4">
 
-                  {/* Type chips */}
-                  <div>
-                    <FieldLabel>Type</FieldLabel>
-                    <div className="flex flex-wrap gap-1.5">
-                      {PHASE_TYPES.map(pt2 => (
-                        <button key={pt2.id} type="button" onClick={() => updatePhase(phase.id, { icon: pt2.id })}
-                          className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all"
-                          style={{
-                            background: phase.icon === pt2.id ? 'rgba(59,130,246,0.12)' : 'rgba(255,255,255,0.04)',
-                            border: `1.5px solid ${phase.icon === pt2.id ? 'rgba(59,130,246,0.4)' : 'rgba(255,255,255,0.08)'}`,
-                            color: phase.icon === pt2.id ? '#60a5fa' : 'var(--text-muted)',
-                          }}>
-                          {pt2.emoji} {pt2.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
                   {/* Goal */}
                   <div>
                     <FieldLabel required>Phase Goal</FieldLabel>
@@ -2145,41 +2254,74 @@ function PhasesStep({ data, onChange }) {
                       value={phase.goal || ''} onChange={e => updatePhase(phase.id, { goal: e.target.value })} />
                   </div>
 
-                  {/* Duration · Unit · Max Attempts */}
+                  {/* Duration · Unit · Max Attempts — with individual sub-labels */}
                   <div>
                     <FieldLabel>Duration & Pacing</FieldLabel>
                     <div className="grid grid-cols-3 gap-2">
-                      <input type="number" min="1" className="input-base w-full text-xs" placeholder="Duration"
-                        value={phase.duration || ''} onChange={e => updatePhase(phase.id, { duration: e.target.value })} />
-                      <select className="input-base w-full text-xs" value={phase.durationUnit || 'Days'}
-                        onChange={e => updatePhase(phase.id, { durationUnit: e.target.value })}>
-                        <option>Days</option><option>Weeks</option><option>Months</option>
-                      </select>
-                      <input type="number" min="1" className="input-base w-full text-xs" placeholder="Max attempts"
-                        value={phase.maxAttempts || ''} onChange={e => updatePhase(phase.id, { maxAttempts: e.target.value })} />
+                      <div>
+                        <input type="number" min="1" className="input-base w-full text-xs" placeholder="e.g. 7"
+                          value={phase.duration || ''} onChange={e => updatePhase(phase.id, { duration: e.target.value })} />
+                        <p className="text-[10px] mt-1" style={{ color: 'var(--text-muted)' }}>Duration</p>
+                      </div>
+                      <div>
+                        <select className="input-base w-full text-xs" value={phase.durationUnit || 'Days'}
+                          onChange={e => updatePhase(phase.id, { durationUnit: e.target.value })}>
+                          <option>Days</option><option>Weeks</option><option>Months</option>
+                        </select>
+                        <p className="text-[10px] mt-1" style={{ color: 'var(--text-muted)' }}>Unit</p>
+                      </div>
+                      <div>
+                        <input type="number" min="1" className="input-base w-full text-xs" placeholder="e.g. 3"
+                          value={phase.maxAttempts || ''} onChange={e => updatePhase(phase.id, { maxAttempts: e.target.value })} />
+                        <p className="text-[10px] mt-1" style={{ color: 'var(--text-muted)' }}>Max attempts / customer</p>
+                      </div>
                     </div>
-                    <p className="text-[10px] mt-1.5" style={{ color: 'var(--text-muted)' }}>Duration · Unit · Max attempts per customer</p>
                   </div>
 
-                  {/* Channel priority pills */}
+                  {/* Channel Priority — numbered by selection order */}
                   <div>
-                    <FieldLabel>Channel Priority</FieldLabel>
-                    <div className="flex flex-wrap gap-1.5">
+                    <FieldLabel hint="Click channels in order of preference — first selected becomes Priority 1">
+                      Channel Priority
+                    </FieldLabel>
+                    <div className="flex flex-wrap gap-2">
                       {PHASE_CHANNELS.map(ch => {
-                        const active = (phase.channels || []).includes(ch.id)
+                        const channels = phase.channels || []
+                        const idx      = channels.indexOf(ch.id)
+                        const active   = idx !== -1
+                        const priority = idx + 1
                         return (
                           <button key={ch.id} type="button" onClick={() => toggleChannel(phase.id, ch.id)}
-                            className="text-[11px] px-2.5 py-1 rounded-full font-semibold transition-all"
+                            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all"
                             style={{
                               background: active ? ch.bg : 'rgba(255,255,255,0.04)',
-                              color: active ? ch.color : 'var(--text-muted)',
-                              border: `1px solid ${active ? ch.border : 'rgba(255,255,255,0.1)'}`,
+                              color:      active ? ch.color : 'var(--text-muted)',
+                              border:     `1.5px solid ${active ? ch.border : 'rgba(255,255,255,0.1)'}`,
                             }}>
+                            {active && (
+                              <span className="inline-flex items-center justify-center w-4 h-4 rounded-full text-[9px] font-bold leading-none shrink-0"
+                                style={{ background: ch.color, color: '#fff' }}>
+                                {priority}
+                              </span>
+                            )}
                             {ch.label}
                           </button>
                         )
                       })}
                     </div>
+                    {(phase.channels || []).length > 0 && (
+                      <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2">
+                        {(phase.channels || []).map((chId, idx) => {
+                          const ch = PHASE_CHANNELS.find(c => c.id === chId)
+                          if (!ch) return null
+                          return (
+                            <span key={chId} className="text-[10px] flex items-center gap-1" style={{ color: 'var(--text-muted)' }}>
+                              <span className="font-bold" style={{ color: ch.color }}>P{idx + 1}</span>
+                              {ch.label}
+                            </span>
+                          )
+                        })}
+                      </div>
+                    )}
                   </div>
 
                   {/* Notes */}
@@ -2195,8 +2337,7 @@ function PhasesStep({ data, onChange }) {
                   </div>
                 </div>
               </div>
-            )
-          })}
+          ))}
 
           {/* Add Phase */}
           <button type="button" onClick={addBlankPhase}
@@ -2222,57 +2363,72 @@ function TrustStep({ data, onChange }) {
       label: 'Tenant Defaults',
       sub: "Uses your organization's default guardrails from tenant settings",
       icon: Globe,
+      personalizationLevel: 1,
       traits: [
-        { icon: Eye,          text: 'Draft for Review'  },
-        { icon: Activity,     text: '75% Confidence'    },
+        { icon: Eye,          text: 'Draft for Review'   },
+        { icon: Activity,     text: '75% Confidence'     },
         { icon: Shield,       text: 'All Topics Enabled' },
+        { icon: User,         text: 'Personalization L1' },
       ],
-      config: { trustMode: 'draft', confidenceThreshold: 75, handoffBehavior: 'Create Task', requireApprovalBelow: true },
+      config: { trustMode: 'draft', confidenceThreshold: 75, handoffBehavior: 'Create Task', requireApprovalBelow: true,
+                personalizationFields: ['name', 'vehicle_interest', 'assigned_bdc', 'source'] },
     },
     {
       id: 'conservative',
       label: 'Conservative',
       sub: 'Maximum human oversight — all actions require approval',
       icon: Shield,
+      personalizationLevel: 1,
       traits: [
         { icon: Lock,         text: 'Approval Required'    },
         { icon: Activity,     text: '85% Confidence'       },
         { icon: AlertTriangle,text: 'Strictest Guardrails' },
+        { icon: User,         text: 'Personalization L1'   },
       ],
-      config: { trustMode: 'approval', confidenceThreshold: 85, handoffBehavior: 'Escalate', requireApprovalBelow: true },
+      config: { trustMode: 'approval', confidenceThreshold: 85, handoffBehavior: 'Escalate', requireApprovalBelow: true,
+                personalizationFields: ['name', 'vehicle_interest', 'assigned_bdc', 'source'] },
     },
     {
       id: 'balanced',
       label: 'Balanced',
       sub: 'Good mix of automation and human review',
       icon: BarChart2,
+      personalizationLevel: 2,
       traits: [
-        { icon: Eye,      text: 'Draft for Review' },
-        { icon: Activity, text: '70% Confidence'   },
+        { icon: Eye,      text: 'Draft for Review'   },
+        { icon: Activity, text: '70% Confidence'     },
+        { icon: User,     text: 'Personalization L2' },
       ],
-      config: { trustMode: 'draft', confidenceThreshold: 70, handoffBehavior: 'Create Task', requireApprovalBelow: true },
+      config: { trustMode: 'draft', confidenceThreshold: 70, handoffBehavior: 'Create Task', requireApprovalBelow: true,
+                personalizationFields: ['name', 'vehicle_interest', 'assigned_bdc', 'source', 'hobbies', 'proximity', 'upcoming_service', 'current_vehicle'] },
     },
     {
       id: 'aggressive',
       label: 'Aggressive',
       sub: 'More automation with less manual review',
       icon: Zap,
+      personalizationLevel: 2,
       traits: [
-        { icon: Zap,      text: 'Auto-Send'      },
-        { icon: Activity, text: '60% Confidence' },
+        { icon: Zap,      text: 'Auto-Send'          },
+        { icon: Activity, text: '60% Confidence'     },
+        { icon: User,     text: 'Personalization L2' },
       ],
-      config: { trustMode: 'auto-send', confidenceThreshold: 60, handoffBehavior: 'None', requireApprovalBelow: false },
+      config: { trustMode: 'auto-send', confidenceThreshold: 60, handoffBehavior: 'None', requireApprovalBelow: false,
+                personalizationFields: ['name', 'vehicle_interest', 'assigned_bdc', 'source', 'hobbies', 'proximity', 'upcoming_service', 'current_vehicle', 'current_products'] },
     },
     {
       id: 'auto-pilot',
       label: 'Auto Pilot',
       sub: 'Maximum automation — minimal human intervention',
       icon: PlayCircle,
+      personalizationLevel: 3,
       traits: [
-        { icon: Zap,      text: 'Auto-Send'      },
-        { icon: Activity, text: '50% Confidence' },
+        { icon: Zap,      text: 'Auto-Send'          },
+        { icon: Activity, text: '50% Confidence'     },
+        { icon: User,     text: 'Personalization L3' },
       ],
-      config: { trustMode: 'auto-send', confidenceThreshold: 50, handoffBehavior: 'None', requireApprovalBelow: false },
+      config: { trustMode: 'auto-send', confidenceThreshold: 50, handoffBehavior: 'None', requireApprovalBelow: false,
+                personalizationFields: ['name', 'vehicle_interest', 'assigned_bdc', 'source', 'hobbies', 'proximity', 'upcoming_service', 'current_vehicle', 'current_products', 'regional_lang', 'family_info', 'activity_history', 'relationship'] },
     },
   ]
 
@@ -2393,23 +2549,36 @@ function TrustStep({ data, onChange }) {
               <div className="px-4 py-2.5" style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                 <p className="text-[10px] font-bold" style={{ color: 'var(--text-secondary)' }}>Current Configuration</p>
               </div>
-              <div className="grid grid-cols-2">
-                {[
-                  { label: 'Trust Mode',         val: TRUST_MODE_LABELS[data.trustMode] || data.trustMode || '—' },
-                  { label: 'Confidence Threshold',val: `${threshold}%` },
-                  { label: 'Sensitive Topics',    val: `${(data.sensitiveTopics || []).filter(t => t.enabled).length} of ${(data.sensitiveTopics || []).length} enabled` },
-                  { label: 'Handoff Behavior',    val: data.handoffBehavior || '—' },
-                ].map((item, i) => (
-                  <div key={item.label} className="px-4 py-3"
-                    style={{
-                      borderRight:  i % 2 === 0 ? '1px solid rgba(255,255,255,0.05)' : 'none',
-                      borderTop:    i >= 2       ? '1px solid rgba(255,255,255,0.05)' : 'none',
-                    }}>
-                    <p className="text-[10px] mb-1" style={{ color: 'var(--text-muted)' }}>{item.label}</p>
-                    <p className="text-xs font-bold" style={{ color: 'var(--text-secondary)' }}>{item.val}</p>
+              {(() => {
+                const pFields = data.personalizationFields || []
+                const L3_IDS = ['regional_lang','family_info','activity_history','relationship']
+                const L2_IDS = ['hobbies','proximity','upcoming_service','current_vehicle','current_products']
+                const pLevel = pFields.some(f => L3_IDS.includes(f)) ? 3
+                             : pFields.some(f => L2_IDS.includes(f)) ? 2 : 1
+                const pLevelColor = pLevel === 3 ? '#f472b6' : pLevel === 2 ? '#60a5fa' : '#4ade80'
+                const cfgItems = [
+                  { label: 'Trust Mode',            val: TRUST_MODE_LABELS[data.trustMode] || data.trustMode || '—' },
+                  { label: 'Confidence Threshold',  val: `${threshold}%` },
+                  { label: 'Sensitive Topics',       val: `${(data.sensitiveTopics || []).filter(t => t.enabled).length} of ${(data.sensitiveTopics || []).length} enabled` },
+                  { label: 'Handoff Behavior',       val: data.handoffBehavior || '—' },
+                  { label: 'Personalization Level',  val: `Level ${pLevel}`, color: pLevelColor },
+                  { label: 'Data Fields Enabled',    val: `${pFields.length} field${pFields.length !== 1 ? 's' : ''}` },
+                ]
+                return (
+                  <div className="grid grid-cols-2">
+                    {cfgItems.map((item, i) => (
+                      <div key={item.label} className="px-4 py-3"
+                        style={{
+                          borderRight: i % 2 === 0 ? '1px solid rgba(255,255,255,0.05)' : 'none',
+                          borderTop:   i >= 2       ? '1px solid rgba(255,255,255,0.05)' : 'none',
+                        }}>
+                        <p className="text-[10px] mb-1" style={{ color: 'var(--text-muted)' }}>{item.label}</p>
+                        <p className="text-xs font-bold" style={{ color: item.color || 'var(--text-secondary)' }}>{item.val}</p>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                )
+              })()}
             </div>
           </div>
         )}
@@ -2694,9 +2863,9 @@ function TrustStep({ data, onChange }) {
                     </div>
                   </div>
                   {[
-                    { val: 'original-rep',  label: 'Assign to original rep',    desc: 'Lead returns to the rep who originally owned it.'      },
-                    { val: 'sales-manager', label: 'Assign to Sales Manager',   desc: 'Escalate complex situations to management.'            },
-                    { val: 'unassigned',    label: 'Leave unassigned',          desc: 'Desk manager manually assigns based on availability.'  },
+                    { val: 'original-rep',  label: 'Assign to original rep',    desc: 'Lead returns to the rep who originally owned it.'                              },
+                    { val: 'sales-manager', label: 'Assign to Sales Manager',   desc: 'Escalate complex situations to management.'                                    },
+                    { val: 'round-robin',   label: 'Round Robin',               desc: 'Automatically distribute to the next available agent — no orphaned leads.'    },
                   ].map(opt => {
                     const active = (data.humanPostHandoff || 'original-rep') === opt.val
                     return (
@@ -2754,14 +2923,15 @@ function TrustStep({ data, onChange }) {
                   const on = req.enabled
                   return (
                     <div key={req.id}
-                      onClick={() => set('humanReviewRequirements', (data.humanReviewRequirements || []).map(r =>
-                        r.id === req.id ? { ...r, enabled: !r.enabled } : r))}
-                      className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg cursor-pointer transition-all"
+                      className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg transition-all"
                       style={{
                         background: on ? 'rgba(245,158,11,0.06)' : 'rgba(255,255,255,0.025)',
                         border: `1px solid ${on ? 'rgba(245,158,11,0.22)' : 'rgba(255,255,255,0.07)'}`,
                       }}>
-                      <div className="rounded flex items-center justify-center shrink-0"
+                      <div
+                        className="rounded flex items-center justify-center shrink-0 cursor-pointer"
+                        onClick={() => set('humanReviewRequirements', (data.humanReviewRequirements || []).map(r =>
+                          r.id === req.id ? { ...r, enabled: !r.enabled } : r))}
                         style={{
                           width: 14, height: 14, minWidth: 14,
                           background: on ? '#7c5cfc' : 'rgba(255,255,255,0.06)',
@@ -2769,7 +2939,20 @@ function TrustStep({ data, onChange }) {
                         }}>
                         {on && <Check size={8} color="#fff" />}
                       </div>
-                      <span className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>{req.label}</span>
+                      <span
+                        className="text-[11px] flex-1 cursor-pointer"
+                        style={{ color: 'var(--text-secondary)' }}
+                        onClick={() => set('humanReviewRequirements', (data.humanReviewRequirements || []).map(r =>
+                          r.id === req.id ? { ...r, enabled: !r.enabled } : r))}>
+                        {req.label}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => set('humanReviewRequirements', (data.humanReviewRequirements || []).filter(r => r.id !== req.id))}
+                        className="ml-auto shrink-0 flex items-center justify-center rounded transition-all hover:bg-white/10"
+                        style={{ width: 18, height: 18, color: 'rgba(255,255,255,0.3)' }}>
+                        <X size={10} />
+                      </button>
                     </div>
                   )
                 })}
@@ -2812,7 +2995,7 @@ function TrustStep({ data, onChange }) {
                 </p>
               </div>
 
-              {/* Approval timeout */}
+              {/* Round Robin Escalation Timeout */}
               <div className="px-3 pb-3 pt-0">
                 <div className="pt-3 px-1" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
                   <div className="flex items-center gap-2 mb-3">
@@ -2821,21 +3004,24 @@ function TrustStep({ data, onChange }) {
                       <Clock size={11} style={{ color: '#fbbf24' }} />
                     </div>
                     <div>
-                      <p className="text-[11px] font-semibold" style={{ color: 'var(--text-secondary)' }}>Manager Approval Timeout</p>
-                      <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Auto-skip if not reviewed within timeout</p>
+                      <p className="text-[11px] font-semibold" style={{ color: 'var(--text-secondary)' }}>Round Robin Escalation Timeout</p>
+                      <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Reassign to next available agent if not reviewed within</p>
                     </div>
                   </div>
                   <select
-                    value={data.humanApprovalTimeout || '4 hours'}
+                    value={data.humanApprovalTimeout || '30 minutes'}
                     onChange={e => set('humanApprovalTimeout', e.target.value)}
                     className="w-full text-xs rounded-lg px-3 py-2.5 outline-none"
                     style={{ background: 'rgba(255,255,255,0.04)', color: 'var(--text-secondary)', border: '1px solid rgba(255,255,255,0.09)' }}>
+                    <option>10 minutes</option>
+                    <option>15 minutes</option>
+                    <option>20 minutes</option>
+                    <option>30 minutes</option>
+                    <option>45 minutes</option>
                     <option>1 hour</option>
+                    <option>1.5 hours</option>
                     <option>2 hours</option>
-                    <option>4 hours</option>
-                    <option>8 hours</option>
-                    <option>24 hours</option>
-                    <option>48 hours</option>
+                    <option>3 hours</option>
                   </select>
                 </div>
               </div>
@@ -2845,6 +3031,192 @@ function TrustStep({ data, onChange }) {
         </div>
       </div>
 
+      {/* ── Messaging Personalization Level ────────────────────────────────────── */}
+      {(() => {
+        const PERSONALIZATION_GROUPS = [
+          {
+            id: 'basic', level: 1, color: '#4ade80', label: 'Basic Lead Data',
+            desc: 'Core intake fields — always available at first contact',
+            fields: [
+              { id: 'name',             label: 'Customer Name',       example: 'e.g. "Maria Gomez"'             },
+              { id: 'vehicle_interest', label: 'Vehicle Interest',    example: 'e.g. "2023 Ford Explorer XLT"'  },
+              { id: 'assigned_bdc',     label: 'Assigned BDC Agent',  example: 'e.g. "alex.bdc"'                },
+              { id: 'source',           label: 'Lead Source',         example: 'e.g. "OEM Website"'             },
+            ],
+          },
+          {
+            id: 'enhanced', level: 2, color: '#60a5fa', label: 'Enhanced Profile',
+            desc: 'Enriched CRM data — available after initial engagement',
+            fields: [
+              { id: 'hobbies',          label: 'Hobbies & Interests',  example: 'From CRM enrichment'            },
+              { id: 'proximity',        label: 'Proximity & Location', example: 'Distance & local context'       },
+              { id: 'upcoming_service', label: 'Upcoming Services',    example: 'Scheduled maintenance alerts'   },
+              { id: 'current_vehicle',  label: 'Current Vehicle',      example: 'Trade-in / owned vehicle info'  },
+              { id: 'current_products', label: 'Current Products',     example: 'Active deals or subscriptions'  },
+            ],
+          },
+          {
+            id: 'deep', level: 3, color: '#f472b6', label: 'Deep Relationship',
+            desc: 'High-touch data — use carefully, requires explicit consent',
+            fields: [
+              { id: 'regional_lang',    label: 'Regional Language',   example: 'Local tone & expressions'        },
+              { id: 'family_info',      label: 'Family & Household',  example: 'Spouse, kids, lifestyle notes'   },
+              { id: 'activity_history', label: 'Dealership Activity', example: 'Past visits, purchases, behavior'},
+              { id: 'relationship',     label: 'Relationship Notes',  example: 'Rep–customer history & context'  },
+            ],
+          },
+        ]
+
+        const pFields = data.personalizationFields || []
+        const L3_IDS  = PERSONALIZATION_GROUPS[2].fields.map(f => f.id)
+        const L2_IDS  = PERSONALIZATION_GROUPS[1].fields.map(f => f.id)
+        const pLevel  = pFields.some(f => L3_IDS.includes(f)) ? 3
+                      : pFields.some(f => L2_IDS.includes(f)) ? 2 : 1
+
+        const toggleField = (id) => {
+          const next = pFields.includes(id) ? pFields.filter(f => f !== id) : [...pFields, id]
+          set('personalizationFields', next)
+        }
+
+        const LEVEL_META = [
+          { n: 1, color: '#4ade80', bg: 'rgba(74,222,128,0.12)', label: 'Basic',    desc: 'Name, vehicle interest & assigned rep'                  },
+          { n: 2, color: '#60a5fa', bg: 'rgba(96,165,250,0.12)', label: 'Enhanced', desc: '+ Hobbies, services, current vehicle & product history' },
+          { n: 3, color: '#f472b6', bg: 'rgba(244,114,182,0.12)',label: 'Full',      desc: '+ Regional tone, family, dealership activity & notes'   },
+        ]
+
+        return (
+          <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.09)' }}>
+
+            {/* Header */}
+            <div className="flex items-center gap-2 px-5 py-3.5"
+              style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+              <User size={13} style={{ color: '#a78bfa' }} />
+              <span className="text-xs font-bold" style={{ color: '#a78bfa' }}>Messaging Personalization Level</span>
+              <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full ml-1"
+                style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--text-muted)' }}>
+                NBA Guardrail
+              </span>
+            </div>
+
+            <div className="px-5 py-4 space-y-5">
+
+              {/* Callout */}
+              <p className="text-[11px] leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+                Select which lead data fields the NBA AI network is allowed to use when composing personalized messages. The active level is automatically derived from your selection and acts as a trust guardrail.
+              </p>
+
+              {/* Level bar */}
+              <div>
+                <p className="text-[11px] font-semibold mb-3" style={{ color: 'var(--text-secondary)' }}>
+                  Active Level
+                </p>
+                <div className="flex gap-2">
+                  {LEVEL_META.map(lm => {
+                    const active = pLevel >= lm.n
+                    const current = pLevel === lm.n
+                    return (
+                      <div key={lm.n} className="flex-1 rounded-xl px-3 py-3 transition-all"
+                        style={{
+                          background: active ? lm.bg : 'rgba(255,255,255,0.02)',
+                          border: `1.5px solid ${active ? lm.color + '55' : 'rgba(255,255,255,0.07)'}`,
+                        }}>
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <div className="w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-bold shrink-0"
+                            style={{ background: active ? lm.color + '25' : 'rgba(255,255,255,0.04)', color: active ? lm.color : 'var(--text-muted)', border: `1px solid ${active ? lm.color + '40' : 'rgba(255,255,255,0.08)'}` }}>
+                            {lm.n}
+                          </div>
+                          <span className="text-[11px] font-bold" style={{ color: active ? lm.color : 'var(--text-muted)' }}>
+                            {lm.label}
+                          </span>
+                          {current && (
+                            <span className="ml-auto text-[9px] font-semibold px-1.5 py-0.5 rounded-full"
+                              style={{ background: lm.color + '20', color: lm.color }}>
+                              Active
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[10px] leading-snug" style={{ color: active ? lm.color + 'bb' : 'var(--text-muted)' }}>
+                          {lm.desc}
+                        </p>
+                      </div>
+                    )
+                  })}
+                </div>
+                {/* Progress fill bar — width = % of fields selected, color = level reached */}
+                {(() => {
+                  const totalFields = PERSONALIZATION_GROUPS.reduce((s, g) => s + g.fields.length, 0)
+                  const fillPct = totalFields > 0 ? Math.round((pFields.length / totalFields) * 100) : 0
+                  return (
+                    <div className="mt-3">
+                      <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
+                        <div className="h-full rounded-full transition-all duration-300"
+                          style={{
+                            width: `${fillPct}%`,
+                            background: pLevel === 3 ? 'linear-gradient(90deg,#4ade80,#60a5fa,#f472b6)'
+                                      : pLevel === 2 ? 'linear-gradient(90deg,#4ade80,#60a5fa)'
+                                      : '#4ade80',
+                          }} />
+                      </div>
+                      <div className="flex justify-between mt-1.5">
+                        <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{pFields.length} of {totalFields} fields selected</span>
+                        <span className="text-[10px] font-semibold" style={{ color: pLevel === 3 ? '#f472b6' : pLevel === 2 ? '#60a5fa' : '#4ade80' }}>{fillPct}%</span>
+                      </div>
+                    </div>
+                  )
+                })()}
+              </div>
+
+              {/* Field groups */}
+              <div className="space-y-4">
+                {PERSONALIZATION_GROUPS.map(group => (
+                  <div key={group.id}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: group.color }} />
+                      <p className="text-[11px] font-semibold" style={{ color: 'var(--text-secondary)' }}>
+                        Level {group.level} — {group.label}
+                      </p>
+                      <span className="text-[10px] ml-1" style={{ color: 'var(--text-muted)' }}>{group.desc}</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {group.fields.map(field => {
+                        const on = pFields.includes(field.id)
+                        return (
+                          <button key={field.id} type="button"
+                            onClick={() => toggleField(field.id)}
+                            className="flex flex-col gap-0.5 px-3 py-2 rounded-lg text-left transition-all"
+                            style={{
+                              background: on ? group.color + '12' : 'rgba(255,255,255,0.03)',
+                              border: `1px solid ${on ? group.color + '45' : 'rgba(255,255,255,0.08)'}`,
+                            }}>
+                            <div className="flex items-center gap-1.5">
+                              <div className="w-3 h-3 rounded flex items-center justify-center shrink-0"
+                                style={{
+                                  background: on ? group.color : 'rgba(255,255,255,0.07)',
+                                  border: `1.5px solid ${on ? group.color : 'rgba(255,255,255,0.2)'}`,
+                                }}>
+                                {on && <Check size={7} color="#000" />}
+                              </div>
+                              <span className="text-[11px] font-medium whitespace-nowrap"
+                                style={{ color: on ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
+                                {field.label}
+                              </span>
+                            </div>
+                            <p className="text-[10px] pl-[18px] whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>
+                              {field.example}
+                            </p>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+            </div>
+          </div>
+        )
+      })()}
+
     </div>
   )
 }
@@ -2852,7 +3224,7 @@ function TrustStep({ data, onChange }) {
 // ── Step: Review ──────────────────────────────────────────────────────────────
 function ReviewStep({ data, onChange, onJump }) {
   const [openSections, setOpenSections] = useState(
-    { basics: true, moment: true, gates: true, objective: false, phases: false, trust: false }
+    { basics: true, knowledge: true, moment: true, gates: true, objective: false, phases: false, trust: false }
   )
   const toggle = (id) => setOpenSections(s => ({ ...s, [id]: !s[id] }))
 
@@ -2870,7 +3242,7 @@ function ReviewStep({ data, onChange, onJump }) {
     return 'incomplete'
   }
 
-  const STEP_IDS     = ['basics', 'moment', 'gates', 'objective', 'phases', 'trust']
+  const STEP_IDS     = ['basics', 'knowledge', 'moment', 'gates', 'objective', 'phases', 'trust']
   const passedCount  = STEP_IDS.filter(id => getSectionStatus(id) === 'complete').length
   const incompleteCount = STEP_IDS.filter(id => getSectionStatus(id) === 'incomplete').length
 
@@ -2911,7 +3283,18 @@ function ReviewStep({ data, onChange, onJump }) {
       ],
     },
     {
-      id: 'moment', stepIdx: 1,
+      id: 'knowledge', stepIdx: 1,
+      icon: BookOpen, iconBg: 'linear-gradient(135deg,#7c5cfc,#a78bfa)',
+      label: 'Knowledge',
+      pairs: (data.knowledgePackages || []).length > 0
+        ? (data.knowledgePackages || []).map((id, i) => {
+            const pack = KNOWLEDGE_PACKS.find(p => p.id === id)
+            return { label: `Pack ${i + 1}`, val: pack ? `${pack.name} · ${pack.department}` : id }
+          })
+        : [{ label: 'Knowledge Packs', val: 'None selected' }],
+    },
+    {
+      id: 'moment', stepIdx: 2,
       icon: Sparkles, iconBg: 'linear-gradient(135deg,#7c5cfc,#a78bfa)',
       label: 'Moment Definition',
       pairs: [
@@ -2922,7 +3305,7 @@ function ReviewStep({ data, onChange, onJump }) {
       ],
     },
     {
-      id: 'gates', stepIdx: 2,
+      id: 'gates', stepIdx: 3,
       icon: Shield, iconBg: 'linear-gradient(135deg,#16a34a,#2dd4bf)',
       label: 'Hard Gates',
       pairs: [
@@ -2935,20 +3318,25 @@ function ReviewStep({ data, onChange, onJump }) {
       ],
     },
     {
-      id: 'objective', stepIdx: 3,
+      id: 'objective', stepIdx: 4,
       icon: Target, iconBg: 'linear-gradient(135deg,#f59e0b,#ef4444)',
       label: 'Objective & Success',
       pairs: [
         { label: 'Goal Type',       val: data.goalType },
         { label: 'Success Event',   val: data.primarySuccessEvent },
-        { label: 'Exit Conditions', val: data.exitConditions.length > 0 ? `${data.exitConditions.length} defined` : '' },
-        { label: 'Failure Outcome', val: data.failureOutcome },
+        { label: 'Exit Conditions', val: (data.exitConditions || []).length > 0
+            ? (data.exitConditions || []).map(e => {
+                const fo = FAILURE_OUTCOMES.find(f => f.id === e.outcome)
+                const ec = EXIT_CONDITIONS.find(c => c.id === e.id)
+                return fo ? `${ec?.label} → ${fo.label}` : ec?.label
+              }).join(' · ')
+            : '' },
         { label: 'KPI Association', val: data.kpiAssociation },
         { label: 'Strategy Notes',  val: data.strategyNotes ? (data.strategyNotes.length > 38 ? data.strategyNotes.slice(0,38)+'…' : data.strategyNotes) : '' },
       ],
     },
     {
-      id: 'phases', stepIdx: 4,
+      id: 'phases', stepIdx: 5,
       icon: Layers, iconBg: 'linear-gradient(135deg,#2563eb,#0891b2)',
       label: 'Phases',
       pairs: data.phases.length > 0
@@ -2959,7 +3347,7 @@ function ReviewStep({ data, onChange, onJump }) {
         : [{ label: 'Phases', val: 'No phases defined' }],
     },
     {
-      id: 'trust', stepIdx: 5,
+      id: 'trust', stepIdx: 6,
       icon: Zap, iconBg: 'linear-gradient(135deg,#7c5cfc,#2563eb)',
       label: 'Trust Controls',
       pairs: [
@@ -2982,7 +3370,7 @@ function ReviewStep({ data, onChange, onJump }) {
   const whatBlocks = [
     data.gate_consent_channels.length > 0  && 'Consent not met for required channels',
     data.gate_status_statuses.length > 0   && 'Customer status restriction active',
-    data.exitConditions.length > 0         && `Exit: ${data.exitConditions.slice(0,2).join(', ')}${data.exitConditions.length > 2 ? '…' : ''}`,
+    (data.exitConditions || []).length > 0  && `Exit: ${(data.exitConditions || []).slice(0,2).map(e => EXIT_CONDITIONS.find(c=>c.id===e.id)?.label || e.id).join(', ')}${(data.exitConditions||[]).length > 2 ? '…' : ''}`,
     data.gate_compliance_checks.length > 0 && `${data.gate_compliance_checks.length} compliance check${data.gate_compliance_checks.length > 1 ? 's' : ''} active`,
     data.gate_custom.length > 0            && `${data.gate_custom.length} custom gate${data.gate_custom.length > 1 ? 's' : ''} enforced`,
   ].filter(Boolean)
@@ -3470,13 +3858,14 @@ export default function PlaybookBuilder() {
   }
 
   const STEP_COMPONENTS = {
-    basics:    <BasicsStep    data={data} onChange={setData} />,
-    moment:    <MomentStep    data={data} onChange={setData} />,
-    gates:     <GatesStep     data={data} onChange={setData} />,
-    objective: <ObjectiveStep data={data} onChange={setData} />,
-    phases:    <PhasesStep    data={data} onChange={setData} />,
-    trust:     <TrustStep     data={data} onChange={setData} />,
-    review:    <ReviewStep    data={data} onChange={setData} onJump={setStep} />,
+    basics:    <BasicsStep     data={data} onChange={setData} />,
+    knowledge: <KnowledgeStep  data={data} onChange={setData} />,
+    moment:    <MomentStep     data={data} onChange={setData} />,
+    gates:     <GatesStep      data={data} onChange={setData} />,
+    objective: <ObjectiveStep  data={data} onChange={setData} />,
+    phases:    <PhasesStep     data={data} onChange={setData} />,
+    trust:     <TrustStep      data={data} onChange={setData} />,
+    review:    <ReviewStep     data={data} onChange={setData} onJump={setStep} />,
   }
 
   const isLastStep = step === STEPS.length - 1
@@ -3613,4 +4002,4 @@ export default function PlaybookBuilder() {
 }
 
 // ── Named exports for Configuration tab in PlaybookDetail ─────────────────────
-export { BasicsStep, MomentStep, GatesStep, ObjectiveStep, PhasesStep, TrustStep, INITIAL }
+export { BasicsStep, KnowledgeStep, MomentStep, GatesStep, ObjectiveStep, PhasesStep, TrustStep, INITIAL }

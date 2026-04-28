@@ -366,12 +366,12 @@ function SimulationPreview({ templateId, onClose, onEditPlaybook }) {
 // ── Playbook summary accordion sections ───────────────────────────────────────
 const SUMMARY_SECTIONS = [
   { id: 'basics',    icon: FileText,    label: 'Basics'             },
+  { id: 'knowledge', icon: BookOpen,    label: 'Knowledge'          },
   { id: 'moment',    icon: Sparkles,    label: 'Moment'             },
   { id: 'gates',     icon: Shield,      label: 'Hard Gates'         },
   { id: 'objective', icon: Target,      label: 'Objective & Success'},
   { id: 'phases',    icon: Layers,      label: 'Phases & Actions'   },
   { id: 'trust',     icon: Zap,         label: 'Trust Controls'     },
-  { id: 'data',      icon: Database,    label: 'Data & Knowledge'   },
   { id: 'tools',     icon: Wrench,      label: 'Tools & Actions'    },
   { id: 'exit',      icon: LogOut,      label: 'Exit Conditions'    },
 ]

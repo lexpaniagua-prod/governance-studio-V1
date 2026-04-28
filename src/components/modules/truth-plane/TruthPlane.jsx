@@ -729,7 +729,7 @@ export default function TruthPlane() {
                         {STATUS_LABELS[plane.status]}
                       </span>
                       <div className="ml-auto flex items-center gap-0.5">
-                        <button className="btn-ghost p-1.5" onClick={e => { e.stopPropagation(); setSelected(plane) }}>
+                        <button className="btn-ghost p-1.5 rounded-lg" title="Preview" onClick={e => { e.stopPropagation(); setSelected(plane) }}>
                           <Eye size={14} />
                         </button>
                         <ThreeDot items={[

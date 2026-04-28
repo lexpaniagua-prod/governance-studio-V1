@@ -108,9 +108,9 @@ function Step1({ selected, onToggle }) {
                   <p className="text-sm font-medium text-text-primary">{claim.title}</p>
                   <Badge variant={claim.status}>{claim.status === 'promotable' ? 'Promotable' : claim.status === 'promoted' ? 'Promoted' : 'Conflict'}</Badge>
                   {/* Eye: preview only — stops propagation so card click (select) is not triggered */}
-                  <button className="btn-ghost p-1 ml-auto rounded-lg" title="Preview claim"
+                  <button className="btn-ghost p-1.5 ml-auto rounded-lg" title="Preview claim"
                     onClick={e => { e.stopPropagation(); setPreviewClaim(claim) }}>
-                    <Eye size={13} />
+                    <Eye size={14} />
                   </button>
                 </div>
                 <p className="text-xs text-text-muted mt-1 line-clamp-1 italic">{claim.text?.replace(/"/g, '')}</p>
@@ -558,9 +558,9 @@ function Step4({ selected }) {
                       </span>
                       <span className="font-semibold" style={{ color: '#4ade80' }}>{claim.confidence}%</span>
                       <CheckCircle size={14} style={{ color: '#4ade80' }} />
-                      <button className="btn-ghost p-1 rounded-lg" title="Preview claim"
+                      <button className="btn-ghost p-1.5 rounded-lg" title="Preview claim"
                         onClick={() => setPreviewClaim(claim)}>
-                        <Eye size={12} />
+                        <Eye size={14} />
                       </button>
                     </div>
                   </div>

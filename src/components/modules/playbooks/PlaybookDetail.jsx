@@ -2,13 +2,13 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { createPortal } from 'react-dom'
 import {
-  ArrowLeft, ChevronRight, ChevronDown, Copy, Play, BookOpen, Archive, Trash2,
+  ArrowLeft, ChevronRight, ChevronDown, Copy, Play, BookOpen, Archive, Trash2, Check,
   Eye, Settings, GitBranch, Activity, Clock, CheckCircle,
   Zap, Shield, User, Layers, AlertTriangle, X, Flag,
   Sparkles, Target, Lock, Save, FileText,
   TrendingUp, BarChart2, Users, ThumbsUp, ThumbsDown, Timer, MousePointer2,
 } from 'lucide-react'
-import { BasicsStep, MomentStep, GatesStep, ObjectiveStep, PhasesStep, TrustStep, INITIAL } from './PlaybookBuilder'
+import { BasicsStep, KnowledgeStep, MomentStep, GatesStep, ObjectiveStep, PhasesStep, TrustStep, INITIAL } from './PlaybookBuilder'
 
 // ── Shared mock (mirrors Playbooks.jsx) ───────────────────────────────────────
 const PLAYBOOKS = [
@@ -1387,12 +1387,13 @@ function ConfigurationTab({ pb, onNameChange, initialCopyName }) {
   const handleDiscard = () => setFormData(buildConfigData(pb, detail))
 
   const SECTIONS = [
-    { id: 'basics',    label: 'Basics',             icon: FileText, iconBg: 'linear-gradient(135deg,#3b82f6,#7c5cfc)', desc: 'Identity, scope & ownership'      },
-    { id: 'moment',    label: 'Moment',              icon: Sparkles, iconBg: 'linear-gradient(135deg,#7c5cfc,#a78bfa)', desc: 'Trigger event & conditions'        },
-    { id: 'gates',     label: 'Hard Gates',          icon: Shield,   iconBg: 'linear-gradient(135deg,#16a34a,#2dd4bf)', desc: 'Eligibility constraints'           },
-    { id: 'objective', label: 'Objective & Success', icon: Target,   iconBg: 'linear-gradient(135deg,#f59e0b,#ef4444)', desc: 'Goal, success & exit conditions'   },
-    { id: 'phases',    label: 'Phases & Actions',    icon: Layers,   iconBg: 'linear-gradient(135deg,#2563eb,#0891b2)', desc: 'Execution phases'                  },
-    { id: 'trust',     label: 'Trust Controls',      icon: Zap,      iconBg: 'linear-gradient(135deg,#7c5cfc,#2563eb)', desc: 'NBA autonomy & guardrails'         },
+    { id: 'basics',    label: 'Basics',             icon: FileText,  iconBg: 'linear-gradient(135deg,#3b82f6,#7c5cfc)', desc: 'Identity, scope & ownership'      },
+    { id: 'knowledge', label: 'Knowledge',          icon: BookOpen,  iconBg: 'linear-gradient(135deg,#7c5cfc,#a78bfa)', desc: 'Knowledge packs & reference data' },
+    { id: 'moment',    label: 'Moment',             icon: Sparkles,  iconBg: 'linear-gradient(135deg,#a78bfa,#ec4899)', desc: 'Trigger event & conditions'       },
+    { id: 'gates',     label: 'Hard Gates',         icon: Shield,    iconBg: 'linear-gradient(135deg,#16a34a,#2dd4bf)', desc: 'Eligibility constraints'          },
+    { id: 'objective', label: 'Objective & Success',icon: Target,    iconBg: 'linear-gradient(135deg,#f59e0b,#ef4444)', desc: 'Goal, success & exit conditions'  },
+    { id: 'phases',    label: 'Phases & Actions',   icon: Layers,    iconBg: 'linear-gradient(135deg,#2563eb,#0891b2)', desc: 'Execution phases'                 },
+    { id: 'trust',     label: 'Trust Controls',     icon: Zap,       iconBg: 'linear-gradient(135deg,#7c5cfc,#2563eb)', desc: 'NBA autonomy & guardrails'        },
   ]
 
   return (
@@ -1443,36 +1444,43 @@ function ConfigurationTab({ pb, onNameChange, initialCopyName }) {
 
           <div className="h-px my-10" style={{ background: 'rgba(255,255,255,0.06)' }} />
 
-          <section id="cfg-moment" className="mb-10">
+          <section id="cfg-knowledge" className="mb-10">
             <CfgSectionHeader sec={SECTIONS[1]} />
+            <KnowledgeStep data={formData} onChange={setFormData} />
+          </section>
+
+          <div className="h-px my-10" style={{ background: 'rgba(255,255,255,0.06)' }} />
+
+          <section id="cfg-moment" className="mb-10">
+            <CfgSectionHeader sec={SECTIONS[2]} />
             <MomentStep data={formData} onChange={setFormData} />
           </section>
 
           <div className="h-px my-10" style={{ background: 'rgba(255,255,255,0.06)' }} />
 
           <section id="cfg-gates" className="mb-10">
-            <CfgSectionHeader sec={SECTIONS[2]} />
+            <CfgSectionHeader sec={SECTIONS[3]} />
             <GatesStep data={formData} onChange={setFormData} />
           </section>
 
           <div className="h-px my-10" style={{ background: 'rgba(255,255,255,0.06)' }} />
 
           <section id="cfg-objective" className="mb-10">
-            <CfgSectionHeader sec={SECTIONS[3]} />
+            <CfgSectionHeader sec={SECTIONS[4]} />
             <ObjectiveStep data={formData} onChange={setFormData} />
           </section>
 
           <div className="h-px my-10" style={{ background: 'rgba(255,255,255,0.06)' }} />
 
           <section id="cfg-phases" className="mb-10">
-            <CfgSectionHeader sec={SECTIONS[4]} />
+            <CfgSectionHeader sec={SECTIONS[5]} />
             <PhasesStep data={formData} onChange={setFormData} />
           </section>
 
           <div className="h-px my-10" style={{ background: 'rgba(255,255,255,0.06)' }} />
 
           <section id="cfg-trust">
-            <CfgSectionHeader sec={SECTIONS[5]} />
+            <CfgSectionHeader sec={SECTIONS[6]} />
             <TrustStep data={formData} onChange={setFormData} />
           </section>
 

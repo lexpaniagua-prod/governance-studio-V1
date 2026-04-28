@@ -560,13 +560,8 @@ function PlaybookCard({ pb, onPreview, onNavigate }) {
           type="button"
           title="Quick preview"
           onClick={e => { e.stopPropagation(); onPreview(pb) }}
-          className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg transition-all hover:brightness-110"
-          style={{
-            background: 'rgba(124,92,252,0.15)',
-            border: '1px solid rgba(124,92,252,0.3)',
-            color: '#a78bfa',
-          }}>
-          <Eye size={13} />
+          className="btn-ghost p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
+          <Eye size={14} />
         </button>
       </div>
     </div>

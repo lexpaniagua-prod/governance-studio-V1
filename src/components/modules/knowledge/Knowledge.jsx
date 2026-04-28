@@ -146,12 +146,20 @@ function PackGridCard({ pack, onSelect, onPreview, onEdit, onArchive, onDuplicat
         <span className="text-[11px] text-text-muted truncate">{pack.owner}</span>
         <span className="text-text-muted opacity-30">·</span>
         <span className="text-[10px] text-text-muted">{pack.lastUpdated}</span>
-        <button
-          className="ml-auto text-[10px] font-semibold px-2.5 py-1 rounded-lg flex items-center gap-1 transition-all hover:brightness-110 shrink-0"
-          style={{ background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.3)', color: '#4ade80' }}
-          onClick={e => { e.stopPropagation(); onSelect?.(pack) }}>
-          Manage
-        </button>
+        <div className="ml-auto flex items-center gap-1.5 shrink-0">
+          <button
+            className="btn-ghost p-1.5 rounded-lg"
+            title="Preview"
+            onClick={e => { e.stopPropagation(); onPreview?.(pack) }}>
+            <Eye size={14} />
+          </button>
+          <button
+            className="text-[10px] font-semibold px-2.5 py-1 rounded-lg flex items-center gap-1 transition-all hover:brightness-110"
+            style={{ background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.3)', color: '#4ade80' }}
+            onClick={e => { e.stopPropagation(); onSelect?.(pack) }}>
+            Manage
+          </button>
+        </div>
       </div>
 
     </div>
@@ -233,7 +241,13 @@ function PackListCard({ pack, selected, onSelect, onPreview, onEdit, onArchive, 
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-1 shrink-0" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center gap-1.5 shrink-0" onClick={e => e.stopPropagation()}>
+          <button
+            className="btn-ghost p-1.5 rounded-lg"
+            title="Preview"
+            onClick={() => onPreview?.(pack)}>
+            <Eye size={14} />
+          </button>
           <button
             className="text-[10px] font-semibold px-2.5 py-1.5 rounded-lg flex items-center gap-1 transition-all hover:brightness-110"
             style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.25)', color: '#4ade80' }}
